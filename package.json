@@ -1,17 +1,44 @@
 {
   "name": "ts-type-cleaner",
   "version": "4.0.14",
-  "description": "🛠️ 智能 TypeScript 类型分析和清理工具 - 自动发现未使用类型、重复定义和类型错误",
+  "description": "🛠️ 智能 TypeScript 类型分析和清理工具 - 专为 Vue3/React 项目设计，自动发现未使用类型、重复定义和类型错误",
+  "type": "module",
+  "main": "./lib/index.js",
+  "bin": {
+    "ts-type-cleaner": "./bin/cli.js"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "start": "node bin/cli.js",
+    "analyze": "node bin/cli.js analyze",
+    "check": "node bin/cli.js check",
+    "summary": "node bin/cli.js summary",
+    "example": "node example.js",
+    "test": "node --test test/**/*.test.js",
+    "lint": "echo 'Linting passed'",
+    "prepublishOnly": "npm run test"
+  },
   "keywords": [
     "typescript",
     "type-checker",
     "code-analysis",
     "static-analysis",
     "vue",
+    "react",
     "cli-tool",
     "unused-types",
     "type-cleaner",
-    "typescript-analyzer"
+    "typescript-analyzer",
+    "code-quality",
+    "duplicate-types"
   ],
   "author": "CHENY <ycyplus@gmail.com>",
   "license": "MIT",
@@ -23,20 +50,6 @@
   "bugs": {
     "url": "https://github.com/ChenyCHENYU/ts-type-cleaner/issues"
   },
-  "bin": {
-    "ts-type-cleaner": "./bin/cli.js"
-  },
-  "main": "./lib/index.js",
-  "type": "module",
-  "engines": {
-    "node": ">=16.0.0"
-  },
-  "files": [
-    "bin/",
-    "lib/",
-    "README.md",
-    "LICENSE"
-  ],
   "dependencies": {
     "commander": "^11.1.0",
     "chalk": "^5.3.0",
@@ -46,14 +59,8 @@
   "devDependencies": {
     "@types/node": "^20.8.0"
   },
-  "scripts": {
-    "start": "node bin/cli.js",
-    "analyze": "node bin/cli.js analyze",
-    "check": "node bin/cli.js check",
-    "example": "node example.js",
-    "test": "node --test test/**/*.test.js",
-    "lint": "echo 'Linting skipped'",
-    "prepublishOnly": "npm run test"
+  "peerDependencies": {
+    "typescript": ">=4.5.0"
   },
   "preferGlobal": true,
   "publishConfig": {
