@@ -1,6 +1,6 @@
 {
   "name": "ts-type-cleaner",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "智能 TypeScript 类型分析和清理工具",
   "keywords": [
     "typescript",
