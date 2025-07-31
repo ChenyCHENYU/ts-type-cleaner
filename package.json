@@ -1,18 +1,21 @@
 {
   "name": "ts-type-cleaner",
   "version": "3.0.3",
-  "description": "智能 TypeScript 类型分析和清理工具",
+  "description": "🛠️ 智能 TypeScript 类型分析和清理工具 - 自动发现未使用类型、重复定义和类型错误",
   "keywords": [
     "typescript",
-    "types",
-    "cleaner",
-    "analyzer",
+    "type-checker",
+    "code-analysis",
+    "static-analysis",
     "vue",
-    "cli"
+    "cli-tool",
+    "unused-types",
+    "type-cleaner",
+    "typescript-analyzer"
   ],
-  "author": "CHENY <ycyplus@gmial.com>",
+  "author": "CHENY <ycyplus@gmail.com>",
   "license": "MIT",
-  "homepage": "https://github.com/ChenyCHENYU/ts-type-cleaner",
+  "homepage": "https://github.com/ChenyCHENYU/ts-type-cleaner#readme",
   "repository": {
     "type": "git",
     "url": "https://github.com/ChenyCHENYU/ts-type-cleaner.git"
@@ -21,8 +24,7 @@
     "url": "https://github.com/ChenyCHENYU/ts-type-cleaner/issues"
   },
   "bin": {
-    "ts-type-cleaner": "./bin/ts-type-cleaner.js",
-    "ttc": "./bin/ttc.js"
+    "ts-type-cleaner": "./bin/cli.js"
   },
   "main": "./lib/index.js",
   "type": "module",
@@ -30,26 +32,31 @@
     "node": ">=16.0.0"
   },
   "files": [
-    "bin",
-    "lib",
-    "templates",
+    "bin/",
+    "lib/",
     "README.md",
     "LICENSE"
   ],
   "dependencies": {
-    "commander": "^11.0.0",
+    "commander": "^11.1.0",
     "chalk": "^5.3.0",
     "ora": "^7.0.1",
-    "enquirer": "^2.4.1"
+    "typescript": "^5.2.2"
   },
   "devDependencies": {
-    "eslint": "^8.0.0",
-    "jest": "^29.0.0"
+    "@types/node": "^20.8.0"
   },
   "scripts": {
-    "build": "node scripts/build.js",
-    "test": "echo 'Skipping tests' && exit 0",
-    "lint": "echo 'Skipping lint for now'",
-    "prepublishOnly": "npm run test && npm run lint"
+    "start": "node bin/cli.js",
+    "analyze": "node bin/cli.js analyze",
+    "check": "node bin/cli.js check",
+    "example": "node example.js",
+    "test": "node --test test/**/*.test.js",
+    "lint": "echo 'Linting skipped'",
+    "prepublishOnly": "npm run test"
+  },
+  "preferGlobal": true,
+  "publishConfig": {
+    "access": "public"
   }
 }
