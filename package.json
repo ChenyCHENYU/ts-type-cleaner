@@ -1,6 +1,6 @@
 {
   "name": "ts-type-cleaner",
-  "version": "4.0.2",
+  "version": "4.0.3",
   "description": "🛠️ 智能 TypeScript 类型分析和清理工具 - 自动发现未使用类型、重复定义和类型错误",
   "keywords": [
     "typescript",
