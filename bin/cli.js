@@ -2,8 +2,8 @@
 import { Command } from 'commander'
 import chalk from 'chalk'
 import ora from 'ora'
-import { TypeAnalyzer } from './analyzer.js'
-import { ReportGenerator } from './reporter.js'
+import { TypeAnalyzer } from '../lib/analyzer.js'
+import { ReportGenerator } from '../lib/reporter.js'
 
 const program = new Command()
 
