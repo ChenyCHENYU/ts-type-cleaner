@@ -97,7 +97,7 @@ program
     })
   })
 
-// 通用命令处理
+// 通用命令处理 
 async function runCommand(options, handler) {
   const spinner = ora('⚙️   正在执行...').start()
   
@@ -106,9 +106,17 @@ async function runCommand(options, handler) {
       rootDir: program.opts().root || process.cwd(),
       outputDir: options.output || './type-reports',
       verbose: program.opts().verbose || false,
-      include: parsePatterns(options.include),
-      exclude: parsePatterns(options.exclude),
+      include: parsePatterns(options.include || 'src/**/*.{ts,tsx,vue}'),
+      exclude: parsePatterns(options.exclude || 'node_modules,dist,.git,build,coverage,**/*.d.ts,**/*.test.ts,**/*.spec.ts'),
       ...options,
+    }
+
+    // 调试信息
+    if (config.verbose) {
+      console.log('🔧  配置信息:')
+      console.log(`    根目录: ${config.rootDir}`)
+      console.log(`    包含模式: ${JSON.stringify(config.include)}`)
+      console.log(`    排除模式: ${JSON.stringify(config.exclude)}`)
     }
 
     await handler(config)
@@ -122,12 +130,27 @@ async function runCommand(options, handler) {
     process.exit(1)
   }
 }
-
 function parsePatterns(patterns) {
-  if (typeof patterns === 'string') {
-    return patterns.split(',').map(p => p.trim())
+  // 如果是undefined或null，返回空数组
+  if (!patterns) {
+    return [];
   }
-  return Array.isArray(patterns) ? patterns : [patterns]
+
+  // 如果已经是数组，直接返回
+  if (Array.isArray(patterns)) {
+    return patterns;
+  }
+
+  // 如果是字符串，按逗号分割
+  if (typeof patterns === "string") {
+    return patterns
+      .split(",")
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0);
+  }
+
+  // 其他情况，包装成数组
+  return [patterns];
 }
 
 // 终端输出格式化
