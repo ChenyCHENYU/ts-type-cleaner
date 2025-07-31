@@ -1,6 +1,6 @@
 {
   "name": "ts-type-cleaner",
-  "version": "4.0.14",
+  "version": "5.0.0",
   "description": "🛠️ 智能 TypeScript 类型分析和清理工具 - 专为 Vue3/React 项目设计，自动发现未使用类型、重复定义和类型错误",
   "type": "module",
   "main": "./lib/index.js",
