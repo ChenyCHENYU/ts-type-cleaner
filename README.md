@@ -1,253 +1,364 @@
 # TypeScript Type Cleaner
 
-一个用来分析和清理 TypeScript 项目中类型定义的工具。帮你找出项目里那些没用的类型
-定义。
+一个高效的 TypeScript 项目类型分析和清理工具。自动发现未使用的类型定义、重复定义和类型错误，帮你保持代码整洁。
 
-## 安装
+## ⚡ 快速开始
 
 ```bash
+# 全局安装
 npm install -g ts-type-cleaner
-```
 
-或者直接使用：
-
-```bash
-npx ts-type-cleaner
-```
-
-## 能干什么
-
-- **分析类型使用情况**：扫描你的项目，告诉你有多少类型定义，多少在用，多少没用
-- **验证类型正确性**：检查 TypeScript 编译错误和代码质量问题
-- **生成清理报告**：给你一个详细的报告，告诉你该删除哪些类型
-
-## 基本用法
-
-### 1. 快速分析项目
-
-```bash
-# 分析当前目录
+# 或者直接使用
 npx ts-type-cleaner analyze
-
-# 分析指定目录
-npx ts-type-cleaner analyze --root ./src
 ```
 
-输出示例：
+## ✨ 核心功能
 
-```
-📊 类型系统分析报告
-==================================================
+- **🔍 智能分析**：深度扫描项目，精确识别类型使用情况
+- **🧹 自动清理**：找出未使用的类型定义和重复声明
+- **🔧 类型验证**：检查 TypeScript 编译错误和代码质量问题
+- **📊 可视化报告**：生成详细的 HTML/Markdown 报告
+- **⚡ CI/CD 友好**：支持快速检查模式，适合持续集成
 
-📈 统计概览:
-  📁 源文件数量: 45
-  🎯 类型定义: 120
-  ❌ 未使用类型: 12
-  ⚠️ 重复定义: 3
-  💯 健康评分: 85/100
+## 🚀 基本用法
 
-💡 改进建议:
-  💡 发现 12 个未使用的类型定义，建议清理
-  ⚠️ 发现 3 个重复的类型定义，建议合并
-```
-
-### 2. 检查类型错误
+### 快速分析
 
 ```bash
-# 基本检查
-npx ts-type-cleaner validate
+# 分析当前项目
+ts-type-cleaner analyze
 
-# 美化显示（推荐）
-npx ts-type-cleaner validate --format
+# 指定目录和阈值
+ts-type-cleaner analyze --root ./src --threshold 85
 ```
 
-美化显示效果：
-
+**输出示例：**
 ```
-🔍 详细错误信息:
+🛠️ TypeScript 类型分析报告
+══════════════════════════════════════════════════
 
-1. TYPESCRIPT
-   📁 src/components/UserCard.tsx:15
-   💬 Property 'username' does not exist on type 'User'
-   🏷️ TS2339
-   💡 建议: 检查属性名是否存在
+📊 分析统计
 
-2. TYPESCRIPT
-   📁 src/utils/helper.ts:8
-   💬 Cannot find name 'debounce'
-   🏷️ TS2304
-   💡 建议: 检查导入是否正确
+   📁 源文件        45
+   🎯 类型定义      120
+   ❌ 未使用类型    12
+   ⚠️ 重复定义      3
+   💯 健康评分      85/100
+
+💡 改进建议
+
+   1. 💡 发现 12 个未使用的类型定义，建议清理
+   2. ⚠️ 发现 3 个重复的类型定义，建议合并
 ```
 
-### 3. 完整检查
+### 类型验证
 
 ```bash
-# 完整检查（分析 + 验证）
-npx ts-type-cleaner check
+# 基础验证
+ts-type-cleaner validate
 
-# 带美化显示
-npx ts-type-cleaner check --format
+# 严格模式+详细错误
+ts-type-cleaner validate --strict --format
 ```
 
-## 命令详解
+**美化输出效果：**
+```
+🔧 类型验证结果
+─────────────────────────────
 
-### `analyze` - 分析类型使用情况
+🚨 错误详情
 
-分析你的项目，统计类型定义的使用情况。
+   1. src/components/UserCard.tsx:15
+      ▶ Property 'username' does not exist on type 'User'
+
+   2. src/utils/helper.ts:8
+      ▶ Cannot find name 'debounce'
+```
+
+### 完整检查
 
 ```bash
-npx ts-type-cleaner analyze [选项]
+# 分析 + 验证 + 生成报告
+ts-type-cleaner check --format html
+
+# 自动打开报告
+ts-type-cleaner check --format html --output ./reports
 ```
 
-**选项：**
+## 📋 命令参考
 
-- `--root <路径>`：指定项目根目录（默认当前目录）
-- `--output <路径>`：报告输出目录（默认 `./type-reports`）
-- `--threshold <数字>`：健康分数阈值（默认 70，低于此分数会退出失败）
-- `--verbose`：显示详细信息
+### `analyze` - 类型使用分析
 
-**健康分数计算：**
-
-- 满分 100 分
-- 未使用的类型每个扣 0.6 分
-- 重复定义的类型每个扣 0.8 分
-
-### `validate` - 验证类型正确性
-
-检查 TypeScript 编译错误和代码质量问题。
+深度分析项目中的类型定义使用情况。
 
 ```bash
-npx ts-type-cleaner validate [选项]
+ts-type-cleaner analyze [options]
 ```
 
-**选项：**
+| 选项 | 说明 | 默认值 |
+|------|------|--------|
+| `-r, --root <path>` | 项目根目录 | 当前目录 |
+| `-o, --output <path>` | 输出目录 | `./type-reports` |
+| `-t, --threshold <num>` | 健康分数阈值 | `70` |
+| `--include <patterns>` | 包含文件模式 | `src/**/*.{ts,tsx,vue}` |
+| `--exclude <patterns>` | 排除文件模式 | `node_modules,dist,.git` |
+| `--json` | JSON 格式输出 | `false` |
+| `--verbose` | 详细信息 | `false` |
 
-- `--root <路径>`：指定项目根目录
-- `--format`：美化错误显示（强烈推荐）
-- `--strict`：严格模式检查
-- `--verbose`：显示详细信息
+### `validate` - 类型验证
+
+检查 TypeScript 编译错误和代码质量。
+
+```bash
+ts-type-cleaner validate [options]
+```
+
+| 选项 | 说明 | 默认值 |
+|------|------|--------|
+| `--strict` | 严格模式检查 | `false` |
+| `--fix` | 尝试自动修复 | `false` |
+| `--json` | JSON 格式输出 | `false` |
 
 ### `check` - 完整检查
 
-运行分析和验证，生成完整报告。
+运行完整的分析和验证，生成综合报告。
 
 ```bash
-npx ts-type-cleaner check [选项]
+ts-type-cleaner check [options]
 ```
 
-**选项：**
+| 选项 | 说明 | 默认值 |
+|------|------|--------|
+| `--format <type>` | 报告格式：`html`\|`markdown`\|`json` | `html` |
+| `-t, --threshold <num>` | 健康分数阈值 | `70` |
 
-- `--root <路径>`：指定项目根目录
-- `--output <路径>`：报告输出目录
-- `--format`：美化错误显示
-- `--verbose`：显示详细信息
+### `quick` - 快速检查
 
-## 实际使用场景
-
-### 场景 1：项目重构前的清理
+适合 CI/CD 的轻量级检查。
 
 ```bash
-# 1. 先看看项目整体情况
-npx ts-type-cleaner analyze
-
-# 2. 检查有没有类型错误
-npx ts-type-cleaner validate --format
-
-# 3. 生成完整报告
-npx ts-type-cleaner check --output ./cleanup-report
+ts-type-cleaner quick [options]
 ```
 
-### 场景 2：CI/CD 中的类型质量检查
+| 选项 | 说明 | 默认值 |
+|------|------|--------|
+| `--silent` | 静默模式 | `false` |
+| `--format <type>` | 输出格式：`text`\|`json`\|`junit` | `text` |
+
+### `init` - 初始化配置
+
+创建项目配置文件。
 
 ```bash
-# 在 CI 中运行，如果健康分数低于 80 就失败
-npx ts-type-cleaner analyze --threshold 80
-
-# 检查是否有类型错误
-npx ts-type-cleaner validate
+ts-type-cleaner init [--force]
 ```
 
-### 场景 3：代码审查时生成报告
+## ⚙️ 配置文件
+
+在项目根目录创建 `.ts-type-cleaner.json`：
+
+```json
+{
+  "rootDir": "./",
+  "outputDir": "./type-reports",
+  "verbose": false,
+  "strict": false,
+  "include": ["src/**/*.{ts,tsx,vue}"],
+  "exclude": ["node_modules", "dist", ".git", "**/*.d.ts"],
+  "threshold": 70,
+  "ignoreVueComponentTypes": true,
+  "ignorePatterns": [
+    "^Props$",
+    "^Emits$", 
+    "/Props$/",
+    "/Events?$/"
+  ]
+}
+```
+
+## 📊 健康评分算法
+
+项目健康分数基于以下因素计算：
+
+- **基础分：** 100 分
+- **未使用类型：** 每个扣 40% 权重
+- **重复定义：** 每个扣 30% 权重
+- **复杂度奖励：** 大型项目获得额外加分
+
+**评级标准：**
+- 90+ 分：🎉 优秀
+- 70-89 分：✅ 良好
+- 50-69 分：⚠️ 需改进
+- 50- 分：❌ 需要修复
+
+## 🎯 实际应用场景
+
+### 1. 项目重构前的准备
 
 ```bash
-# 生成详细报告供团队审查
-npx ts-type-cleaner check --format --output ./code-review-reports
+# 全面体检
+ts-type-cleaner check --format html --verbose
+
+# 查看详细报告，制定清理计划
 ```
 
-## 生成的报告
-
-运行 `check` 命令后，会在输出目录生成一个 Markdown 报告，包含：
-
-1. **问题统计**：未使用类型、重复定义、类型错误的数量
-2. **未使用类型清单**：列出所有未使用的类型，包括文件位置和行号
-3. **重复类型清单**：列出重复定义的类型
-4. **类型错误详情**：详细的错误信息和位置
-5. **清理建议**：具体的修复建议
-
-## 常见问题
-
-### Q: 为什么有些类型被标记为"未使用"但我觉得有用？
-
-A: 工具只能检测到明确的引用关系。以下情况可能被误标记：
-
-- 只在注释中使用的类型
-- 动态导入的类型
-- 作为其他库的接口约束使用
-
-### Q: 健康分数怎么提高？
-
-A:
-
-1. 删除真正未使用的类型定义
-2. 合并重复的类型定义
-3. 修复 TypeScript 编译错误
-
-### Q: 可以忽略某些文件吗？
-
-A: 目前工具会自动忽略 `node_modules`、`dist`、`.git` 等目录。其他忽略规则需要在
-源码中配置。
-
-### Q: 报告文件在哪里？
-
-A: 默认在 `./type-reports` 目录下，可以用 `--output` 参数指定其他位置。
-
-## 项目配置
-
-你的项目需要有 `tsconfig.json` 文件，工具会根据这个配置进行类型检查。
-
-推荐的项目结构：
-
-```
-your-project/
-├── src/           # 源代码目录
-├── tsconfig.json  # TypeScript 配置
-└── package.json   # 项目配置
-```
-
-## 最佳实践
-
-1. **定期检查**：建议每周运行一次完整检查
-2. **CI 集成**：在持续集成中添加类型质量检查
-3. **设置阈值**：根据项目情况设置合适的健康分数阈值
-4. **团队共享**：将生成的报告分享给团队成员
-
-## 技术要求
-
-- Node.js 16+
-- TypeScript 项目
-- 有效的 `tsconfig.json` 配置
-
-## 常用命令组合
+### 2. 持续集成质量门禁
 
 ```bash
-# 日常开发检查
-npx ts-type-cleaner validate --format
+# 在 CI 脚本中添加
+ts-type-cleaner quick --threshold 80 --format junit
 
-# 深度清理前的分析
-npx ts-type-cleaner check --format --verbose
-
-# CI/CD 质量门禁
-npx ts-type-cleaner analyze --threshold 85 && npx ts-type-cleaner validate
+# GitHub Actions 示例
+- name: TypeScript Type Check
+  run: |
+    npx ts-type-cleaner quick --threshold 85
+    if [ $? -ne 0 ]; then exit 1; fi
 ```
 
-这个工具就是帮你保持 TypeScript 项目的类型定义干净整洁，仅此而已。
+### 3. 代码审查辅助
+
+```bash
+# 生成审查报告
+ts-type-cleaner check --format markdown --output ./review-reports
+
+# 将报告附加到 PR 描述中
+```
+
+### 4. 定期维护清理
+
+```bash
+# 每周运行的清理脚本
+#!/bin/bash
+echo "🧹 开始类型清理..."
+ts-type-cleaner analyze --threshold 85
+ts-type-cleaner validate --strict
+echo "✅ 清理完成"
+```
+
+## 📋 生成的报告
+
+### HTML 报告特性
+- 📊 可交互的统计图表
+- 🔍 详细的错误上下文
+- 💡 智能修复建议
+- 🎨 现代化 UI 设计
+
+### Markdown 报告内容
+- 📈 项目健康概览
+- 📝 未使用类型清单
+- 🔧 错误修复指南
+- 💭 最佳实践建议
+
+### JSON 报告用途
+- 🔌 与其他工具集成
+- 📈 历史数据分析
+- 🤖 自动化处理
+
+## 🤔 常见问题
+
+### Q: 为什么某些我确实在用的类型被标记为"未使用"？
+
+**A:** 可能的原因：
+- 只在类型断言中使用：`as UserType`
+- 仅在注释中引用
+- 通过动态导入使用
+- 作为其他库的接口约束
+
+**解决方案：**
+在配置文件中添加忽略模式，或使用 `// @ts-type-cleaner-ignore` 注释。
+
+### Q: 如何提高健康分数？
+
+**A:** 按优先级排序：
+1. **修复类型错误**（影响最大）
+2. **删除真正未使用的类型**
+3. **合并重复的类型定义**
+4. **优化类型结构**
+
+### Q: 支持 Vue 项目吗？
+
+**A:** 完全支持！工具能够：
+- 解析 `.vue` 文件中的 `<script lang="ts">` 块
+- 智能忽略 Vue 组件内部类型（Props、Emits 等）
+- 分析 Vue 3 Composition API 类型使用
+
+### Q: 可以在 monorepo 中使用吗？
+
+**A:** 可以。建议：
+```bash
+# 分析特定包
+ts-type-cleaner analyze --root ./packages/core
+
+# 或者在每个包的根目录分别运行
+cd packages/ui && ts-type-cleaner check
+cd packages/utils && ts-type-cleaner check
+```
+
+## 🔧 技术要求
+
+- **Node.js:** 16.0 或更高版本
+- **TypeScript:** 4.0+ 项目
+- **配置文件:** 项目根目录需要 `tsconfig.json`
+
+## 🏆 最佳实践
+
+### 1. 定期检查
+```bash
+# 建议频率
+# 开发阶段：每天 quick 检查
+# 发布前：完整 check
+# 重构时：详细 analyze
+```
+
+### 2. 团队规范
+- 设置统一的健康分数阈值
+- 将检查集成到 pre-commit hooks
+- 定期分享报告进行代码审查
+
+### 3. 渐进式改进
+- 先修复明显的错误
+- 逐步提高阈值标准
+- 记录改进过程和效果
+
+### 4. 自动化流程
+```yaml
+# .github/workflows/type-check.yml
+name: Type Quality Check
+on: [push, pull_request]
+jobs:
+  type-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: npm ci
+      - name: Type quality check
+        run: npx ts-type-cleaner quick --threshold 80
+```
+
+## 🎨 输出格式示例
+
+### 简洁模式
+```
+✅ 类型检查通过 (评分: 87/100)
+```
+
+### 详细模式
+```
+🛠️ TypeScript 类型分析报告
+══════════════════════════════════════════════════
+📊 分析统计
+📈 验证结果
+💡 改进建议
+📋 详细报告: ./type-reports/report-2024-01-15.html
+```
+
+---
+
+**让你的 TypeScript 项目保持最佳状态！** 🚀
+
+如果遇到问题或有改进建议，欢迎提 Issue。
