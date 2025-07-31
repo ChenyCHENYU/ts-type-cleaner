@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const mainScript = join(__dirname, 'ts-type-cleaner.js')
+const mainScript = join(__dirname, '..', 'bin', 'ts-type-cleaner.js')
 
 const child = spawn('node', [mainScript, ...process.argv.slice(2)], {
   stdio: 'inherit',
