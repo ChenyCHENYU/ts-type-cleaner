@@ -2,15 +2,22 @@
 import { Command } from 'commander'
 import chalk from 'chalk'
 import ora from 'ora'
+import { readFileSync } from 'fs'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
 import { TypeAnalyzer } from '../lib/analyzer.js'
 import { ReportGenerator } from '../lib/reporter.js'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8'))
 
 const program = new Command()
 
 program
-  .name('vue-type-checker')
-  .description('🛠️ Vue3 + TypeScript 项目类型分析工具')
-  .version('1.0.0')
+  .name('ts-type-cleaner')
+  .description('🛠️ TypeScript 类型分析和清理工具')
+  .version(pkg.version)
 
 // analyze 命令 - 完整分析
 program
@@ -110,7 +117,7 @@ program
         if (lowScore) {
           console.log(chalk.gray(`   健康度 ${report.healthScore} 低于阈值 ${threshold}`))
         }
-        console.log(chalk.gray('\n   运行 `vue-type-checker analyze` 查看详细信息'))
+        console.log(chalk.gray('\n   运行 `ts-type-cleaner analyze` 查看详细信息'))
         process.exit(1)
       } else {
         console.log(chalk.green.bold('\n🎉 检查通过！'))

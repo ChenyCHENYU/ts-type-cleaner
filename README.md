@@ -1,8 +1,8 @@
-# 🛠️ Vue Type Checker
+# 🛠️ TS Type Cleaner
 
-**专为 Vue3 + TypeScript 项目设计的类型分析工具**
+**智能 TypeScript 类型分析和清理工具 - 专为 Vue3/React 项目设计**
 
-[![npm version](https://img.shields.io/npm/v/vue-type-checker.svg)](https://www.npmjs.com/package/vue-type-checker)
+[![npm version](https://img.shields.io/npm/v/ts-type-cleaner.svg)](https://www.npmjs.com/package/ts-type-cleaner)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js CI](https://img.shields.io/badge/Node.js->=16.0.0-green.svg)](https://nodejs.org/)
 
@@ -37,26 +37,26 @@
 
 ```bash
 # npm
-npm install vue-type-checker --save-dev
+npm install ts-type-cleaner --save-dev
 
 # yarn  
-yarn add vue-type-checker -D
+yarn add ts-type-cleaner -D
 
 # pnpm
-pnpm add vue-type-checker -D
+pnpm add ts-type-cleaner -D
 ```
 
 ### 基本使用
 
 ```bash
 # 快速检查类型错误
-npx vue-type-checker check
+npx ts-type-cleaner check
 
 # 完整分析并生成报告
-npx vue-type-checker analyze
+npx ts-type-cleaner analyze
 
 # 查看项目类型统计
-npx vue-type-checker summary
+npx ts-type-cleaner summary
 ```
 
 ## 📋 命令详解
@@ -66,7 +66,7 @@ npx vue-type-checker summary
 适合在 CI/CD 中使用，快速验证类型正确性：
 
 ```bash
-npx vue-type-checker check [options]
+npx ts-type-cleaner check [options]
 
 Options:
   -r, --root <path>        项目根目录 (默认: 当前目录)
@@ -93,7 +93,7 @@ Options:
 进行深度分析并生成详细报告：
 
 ```bash
-npx vue-type-checker analyze [options]
+npx ts-type-cleaner analyze [options]
 
 Options:
   -r, --root <path>    项目根目录 (默认: 当前目录)
@@ -113,7 +113,7 @@ Options:
 快速了解项目类型使用情况：
 
 ```bash
-npx vue-type-checker summary [options]
+npx ts-type-cleaner summary [options]
 
 Options:
   -r, --root <path>    项目根目录 (默认: 当前目录)
@@ -127,10 +127,10 @@ Options:
 ```json
 {
   "scripts": {
-    "type:check": "vue-type-checker check",
-    "type:analyze": "vue-type-checker analyze", 
-    "type:summary": "vue-type-checker summary",
-    "precommit": "vue-type-checker check --threshold 80"
+    "type:check": "ts-type-cleaner check",
+    "type:analyze": "ts-type-cleaner analyze", 
+    "type:summary": "ts-type-cleaner summary",
+    "precommit": "ts-type-cleaner check --threshold 80"
   }
 }
 ```
@@ -158,7 +158,7 @@ jobs:
         run: npm ci
         
       - name: Type check
-        run: npx vue-type-checker check --threshold 75
+        run: npx ts-type-cleaner check --threshold 75
 ```
 
 ### Git Hooks (husky)
@@ -167,8 +167,8 @@ jobs:
 {
   "husky": {
     "hooks": {
-      "pre-commit": "vue-type-checker check",
-      "pre-push": "vue-type-checker check --threshold 80"
+      "pre-commit": "ts-type-cleaner check",
+      "pre-push": "ts-type-cleaner check --threshold 80"
     }
   }
 }
@@ -264,10 +264,10 @@ jobs:
 ### 环境变量
 ```bash
 # 启用详细模式
-VTC_VERBOSE=true npx vue-type-checker analyze
+VTC_VERBOSE=true npx ts-type-cleaner analyze
 
 # 设置默认阈值
-VTC_THRESHOLD=80 npx vue-type-checker check
+VTC_THRESHOLD=80 npx ts-type-cleaner check
 ```
 
 ## 🚧 项目要求
@@ -324,7 +324,7 @@ your-project/
 ### 编程式调用
 
 ```javascript
-import { analyzeProject, quickCheck, getProjectStats } from 'vue-type-checker'
+import { analyzeProject, quickCheck, getProjectStats } from 'ts-type-cleaner'
 
 // 完整分析
 const report = await analyzeProject({
@@ -351,7 +351,7 @@ console.log(`发现 ${stats.errors} 个错误`)
 ### 自定义报告
 
 ```javascript
-import { TypeAnalyzer, ReportGenerator } from 'vue-type-checker'
+import { TypeAnalyzer, ReportGenerator } from 'ts-type-cleaner'
 
 const analyzer = new TypeAnalyzer({ rootDir: './src' })
 const report = await analyzer.analyze()
@@ -365,12 +365,12 @@ await reporter.generateMarkdownReport(report)
 
 ### 禁用颜色输出
 ```bash
-NO_COLOR=1 npx vue-type-checker analyze
+NO_COLOR=1 npx ts-type-cleaner analyze
 ```
 
 ### JSON 格式输出
 ```bash
-npx vue-type-checker analyze --json > report.json
+npx ts-type-cleaner analyze --json > report.json
 ```
 
 ## 📈 性能优化
@@ -398,7 +398,7 @@ npx vue-type-checker analyze --json > report.json
 我们欢迎任何形式的贡献！
 
 ### 报告问题
-- 在 [GitHub Issues](https://github.com/your-username/vue-type-checker/issues) 提交 bug 报告
+- 在 [GitHub Issues](https://github.com/ChenyCHENYU/ts-type-cleaner/issues) 提交 bug 报告
 - 提供详细的复现步骤和环境信息
 
 ### 功能请求
@@ -416,8 +416,8 @@ npx vue-type-checker analyze --json > report.json
 
 ```bash
 # 克隆仓库
-git clone https://github.com/your-username/vue-type-checker.git
-cd vue-type-checker
+git clone https://github.com/ChenyCHENYU/ts-type-cleaner.git
+cd ts-type-cleaner
 
 # 安装依赖
 npm install
@@ -448,7 +448,7 @@ npm run prepublish
 ```
 MIT License
 
-Copyright (c) 2024 Vue Type Checker
+Copyright (c) 2024 TS Type Cleaner
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -481,7 +481,7 @@ SOFTWARE.
 
 ## 🌟 Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=your-username/vue-type-checker&type=Date)](https://star-history.com/#your-username/vue-type-checker&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=ChenyCHENYU/ts-type-cleaner&type=Date)](https://star-history.com/#ChenyCHENYU/ts-type-cleaner&Date)
 
 ---
 

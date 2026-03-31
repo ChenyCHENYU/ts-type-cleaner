@@ -1,6 +1,6 @@
 {
   "name": "ts-type-cleaner",
-  "version": "5.0.8",
+  "version": "5.1.0",
   "description": "🛠️ 智能 TypeScript 类型分析和清理工具 - 专为 Vue3/React 项目设计，自动发现未使用类型、重复定义和类型错误",
   "type": "module",
   "main": "./lib/index.js",
@@ -23,7 +23,6 @@
     "summary": "node bin/cli.js summary",
     "example": "node example.js",
     "test": "node --test test/**/*.test.js",
-    "lint": "echo 'Linting passed'",
     "prepublishOnly": "npm run test"
   },
   "keywords": [
@@ -54,8 +53,7 @@
     "chalk": "^5.3.0",
     "commander": "^11.1.0",
     "ora": "^7.0.1",
-    "ts-unused-exports": "^11.0.1",
-    "typescript": ">=4.5.0"
+    "ts-unused-exports": "^11.0.1"
   },
   "devDependencies": {
     "@types/node": "^20.8.0"
@@ -63,7 +61,6 @@
   "peerDependencies": {
     "typescript": ">=4.5.0"
   },
-  "preferGlobal": true,
   "publishConfig": {
     "access": "public"
   }
