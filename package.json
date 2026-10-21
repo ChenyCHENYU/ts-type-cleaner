@@ -1,18 +1,19 @@
 {
   "name": "ts-type-cleaner",
-  "version": "5.1.0",
-  "description": "🛠️ 智能 TypeScript 类型分析和清理工具 - 专为 Vue3/React 项目设计，自动发现未使用类型、重复定义和类型错误",
+  "version": "5.1.1",
+  "description": "TypeScript 类型分析工具 - 自动发现未使用类型、重复定义与类型错误（Vue3/React 项目友好）",
   "type": "module",
   "main": "./lib/index.js",
   "bin": {
     "ts-type-cleaner": "./bin/cli.js"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18"
   },
   "files": [
     "bin/",
     "lib/",
+    "docs",
     "README.md",
     "LICENSE"
   ],
@@ -30,14 +31,12 @@
     "type-checker",
     "code-analysis",
     "static-analysis",
-    "vue",
-    "react",
-    "cli-tool",
     "unused-types",
     "type-cleaner",
-    "typescript-analyzer",
-    "code-quality",
-    "duplicate-types"
+    "vue3",
+    "react",
+    "cli-tool",
+    "code-quality"
   ],
   "author": "CHENY <ycyplus@gmail.com>",
   "license": "MIT",

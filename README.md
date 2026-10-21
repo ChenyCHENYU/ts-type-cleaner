@@ -1,490 +1,157 @@
-# 🛠️ TS Type Cleaner
+<div align="center">
 
-**智能 TypeScript 类型分析和清理工具 - 专为 Vue3/React 项目设计**
+<img src="./docs/assets/banner.svg" alt="ts-type-cleaner" width="100%" />
 
-[![npm version](https://img.shields.io/npm/v/ts-type-cleaner.svg)](https://www.npmjs.com/package/ts-type-cleaner)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js CI](https://img.shields.io/badge/Node.js->=16.0.0-green.svg)](https://nodejs.org/)
+**让堆积的类型无处可藏** —— TypeScript 编译器驱动的未使用类型分析工具
 
-一个简洁高效的 TypeScript 类型分析工具，专门针对 Vue3 + TS 项目优化，帮助你：
+[![npm version](https://img.shields.io/npm/v/ts-type-cleaner?style=flat-square&color=818CF8&labelColor=0B1020)](https://www.npmjs.com/package/ts-type-cleaner)
+[![npm downloads](https://img.shields.io/npm/dm/ts-type-cleaner?style=flat-square&color=22D3EE&labelColor=0B1020)](https://www.npmjs.com/package/ts-type-cleaner)
+[![License](https://img.shields.io/badge/License-MIT-C084FC?style=flat-square&labelColor=0B1020)](./LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-%E2%89%A5%204.5-3178C6?style=flat-square&labelColor=0B1020&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Node](https://img.shields.io/badge/Node-%E2%89%A5%2018-5FA04E?style=flat-square&labelColor=0B1020&logo=node.js&logoColor=white)](https://nodejs.org/)
 
-- ✅ **精准检测类型错误** - 明确定位到文件和行号
-- ⚠️ **识别重复类型定义** - 排除框架重复，只关注真正的问题  
-- 🗑️ **清理未使用类型** - 保持代码整洁
-- 📊 **健康度评分** - 量化代码类型质量
-- 📋 **详细报告生成** - 便于团队协作和问题追溯
+[安装](#安装) · [命令](#命令与选项) · [输出示例](#输出示例) · [工作原理](#工作原理) · [FAQ](#faq)
 
-## 🎯 特性亮点
+</div>
 
-### 🔍 智能分析
-- 只扫描 `src/` 目录，避免无关文件干扰
-- 支持 `.ts`、`.tsx`、`.vue` 文件
-- 使用 TypeScript Compiler API 确保准确性
+## 它解决什么问题
 
-### 🎨 精美输出
-- 彩色控制台输出，信息一目了然
-- 进度条显示健康度评分
-- 分类展示问题类型
+项目长大之后，`types/` 目录和各模块里堆积了大量没人使用的 `interface` / `type` / `enum`：不敢删、不知道谁在用、review 也看不过来。
 
-### 📈 多种模式
-- **快速检查** - 适合 CI/CD 流水线
-- **完整分析** - 生成详细报告
-- **统计概览** - 项目类型使用情况
+ts-type-cleaner 基于 **TypeScript 编译器 API** 遍历类型定义与引用，交叉验证 **ts-unused-exports**，一次性找出：
 
-## 🚀 快速开始
+- **未使用类型** —— 已导出但全项目无人引用
+- **重复定义** —— 同名类型在多个文件重复出现
+- **类型错误** —— 项目自身的 TS 编译诊断
 
-### 安装
+只做分析、不做删除，结果输出到控制台并生成 Markdown 报告，改不改、怎么改由你决定。
+
+## 安装
 
 ```bash
-# npm
-npm install ts-type-cleaner --save-dev
-
-# yarn  
-yarn add ts-type-cleaner -D
-
-# pnpm
 pnpm add ts-type-cleaner -D
+# 或
+npm install ts-type-cleaner --save-dev
 ```
 
-### 基本使用
+一次性使用也可以：`npx ts-type-cleaner analyze`
+
+## 命令与选项
+
+| 命令 | 别名 | 作用 |
+|------|------|------|
+| `analyze` | `a` | 完整分析：未使用类型 + 重复定义 + 类型错误，生成控制台报告与 Markdown 报告 |
+| `check` | `c` | 快速检查类型错误并计算健康度，低于阈值时以非零码退出（适合 CI） |
+| `summary` | `s` | 项目类型统计概览（定义数 / 使用数 / 健康度） |
+
+| 选项 | 说明 | 默认值 |
+|------|------|--------|
+| `-r, --root <path>` | 项目根目录 | 当前目录 |
+| `-v, --verbose` | 显示详细分析过程（analyze） | 关闭 |
+| `--no-report` | 不生成 Markdown 报告（analyze） | 生成 |
+| `-t, --threshold <number>` | 健康度阈值（check） | `70` |
 
 ```bash
-# 快速检查类型错误
-npx ts-type-cleaner check
-
-# 完整分析并生成报告
+# 完整分析（生成 TYPE_ANALYSIS_REPORT.md）
 npx ts-type-cleaner analyze
 
-# 查看项目类型统计
+# CI 卡点：健康度低于 80 直接失败
+npx ts-type-cleaner check -t 80
+
+# 统计概览
 npx ts-type-cleaner summary
 ```
 
-## 📋 命令详解
+## 输出示例
 
-### `check` - 快速检查
+```
+📊 类型分析报告
 
-适合在 CI/CD 中使用，快速验证类型正确性：
+  类型定义总数    156
+  已使用          132
+  未使用          18
+  重复定义        4
+  类型错误        2
+  健康度          84%
 
-```bash
-npx ts-type-cleaner check [options]
-
-Options:
-  -r, --root <path>        项目根目录 (默认: 当前目录)
-  -t, --threshold <number> 健康度阈值 (默认: 70)
-  -h, --help              显示帮助信息
+  未使用类型（前 5 个）:
+  ● UserInfo       src/types/user.ts:12     interface
+  ● TableConfig    src/types/table.ts:8     type
+  ● ApiResult      src/api/types.ts:3       interface
+  ...
 ```
 
-**示例输出：**
-```
-──────────────────────────────────────────────────
-🎯 TypeScript 类型检查
-──────────────────────────────────────────────────
-📊 健康度评分: 85/100
-🚨 类型错误: 0  
-⚠️ 重复定义: 2
-🗑️ 未使用类型: 5
-──────────────────────────────────────────────────
+Markdown 报告包含完整清单与文件行号，可直接贴进 issue 或文档。
 
-🎉 检查通过！
-```
+## 工作原理
 
-### `analyze` - 完整分析
+1. **扫描**：遍历 `src/` 下 `.ts` / `.tsx` / `.vue` 文件（跳过 `.d.ts` 与 `node_modules`）
+2. **双引擎检测**：TypeScript Compiler API 收集类型定义与引用 → ts-unused-exports 交叉验证导出使用情况；任一引擎异常时自动降级为内置的基础检测
+3. **降噪**：内置 Vue3 / Pinia / Naive UI 常见全局 API 排除清单，避免框架 API 被误报
+4. **报告**：汇总健康度并渲染控制台输出 + Markdown 报告
 
-进行深度分析并生成详细报告：
+**当前约定（如实说明）**：默认按 `src/` 目录结构扫描（可通过 `--root` 指定项目根），并按内部约定跳过 `src/stores/**`。
 
-```bash
-npx ts-type-cleaner analyze [options]
+## FAQ
 
-Options:
-  -r, --root <path>    项目根目录 (默认: 当前目录)
-  -v, --verbose        显示详细信息
-  --no-report          不生成 Markdown 报告
-  -h, --help          显示帮助信息
-```
+<details>
+<summary><b>它会自动删除未使用类型吗？</b></summary>
 
-**功能：**
-- 精美的控制台报告
-- 自动生成 Markdown 详细报告
-- 按文件分组显示问题
-- 提供修复建议
+不会。工具只做检测与报告，避免误删；根据报告人工确认后清理更安全。
 
-### `summary` - 统计概览
+</details>
 
-快速了解项目类型使用情况：
+<details>
+<summary><b>我的源码不在 src/ 目录，能用吗？</b></summary>
 
-```bash
-npx ts-type-cleaner summary [options]
+当前版本按 `src/` 约定扫描，`--root` 用于指定项目根目录而非源码目录。非 `src` 结构的支持在计划中，欢迎提 Issue 推动优先级。
 
-Options:
-  -r, --root <path>    项目根目录 (默认: 当前目录)
-  -h, --help          显示帮助信息
-```
+</details>
 
-## 🔧 集成到项目
+<details>
+<summary><b>如何在 CI 里做卡点？</b></summary>
 
-### Package.json Scripts
-
-```json
-{
-  "scripts": {
-    "type:check": "ts-type-cleaner check",
-    "type:analyze": "ts-type-cleaner analyze", 
-    "type:summary": "ts-type-cleaner summary",
-    "precommit": "ts-type-cleaner check --threshold 80"
-  }
-}
-```
-
-### GitHub Actions
+`check` 命令计算健康度并在低于阈值时非零退出：
 
 ```yaml
-name: Type Check
-on: [push, pull_request]
-
-jobs:
-  type-check:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
-          
-      - name: Install dependencies
-        run: npm ci
-        
-      - name: Type check
-        run: npx ts-type-cleaner check --threshold 75
+- run: npx ts-type-cleaner check -t 80
 ```
 
-### Git Hooks (husky)
+</details>
 
-```json
-{
-  "husky": {
-    "hooks": {
-      "pre-commit": "ts-type-cleaner check",
-      "pre-push": "ts-type-cleaner check --threshold 80"
-    }
-  }
-}
-```
+<details>
+<summary><b>检测结果可信吗？误报怎么办？</b></summary>
 
-## 📊 报告示例
+双引擎交叉验证 + 框架全局排除清单降低误报；动态字符串引用的类型可能被标记为未使用，删除前建议全局搜索确认一次。
 
-### 控制台输出
+</details>
 
-```
-═══════════════════════════════════════════════════════════
-🛠️  TypeScript 类型分析报告
-═══════════════════════════════════════════════════════════
+## 兼容性
 
-📊 健康度评分
-─────────────────────────
-🟢 综合评分: 85/100 (良好)
-[████████████████████████░░░░░░] 85%
+| 项目 | 要求 |
+|------|------|
+| TypeScript | `>= 4.5`（peer dependency，使用项目自身的 TS） |
+| Node.js | `>= 18` |
+| 项目结构 | `.ts` / `.tsx` / `.vue`（Vue SFC 支持） |
 
-📈 统计数据  
-─────────────────────────
-📁 源文件    42     🎯 类型定义   156
-🔗 类型引用  298    🚨 类型错误     0
-⚠️ 重复定义    2     🗑️ 未使用类型    8
+## 版本历史
 
-🚨 类型错误 (0)
-─────────────────────────────────────────────────
-✅ 未发现类型错误
+见 [GitHub Releases](https://github.com/ChenyCHENYU/ts-type-cleaner/releases) 与 [提交记录](https://github.com/ChenyCHENYU/ts-type-cleaner/commits/main)。
 
-⚠️ 重复类型定义 (2)
-─────────────────────────────────────────────────
+## 贡献
 
-🔄 User
-  1. src/types/user.ts:5 (interface)
-  2. src/components/User.vue:12 (interface)
+欢迎提交 [Issue](https://github.com/ChenyCHENYU/ts-type-cleaner/issues) 与 Pull Request。
 
-🗑️ 未使用类型 (8)
-─────────────────────────────────────────────────
-• ApiResponse    • UserConfig     • ThemeOptions   • FormState
-• TableColumn    • MenuConfig     • LayoutProps    • ButtonType
+## 许可证
 
-💡 改进建议
-─────────────────────────
-1. ⚠️ 合并或重命名 2 个重复类型
-2. 🗑️  清理 8 个未使用类型
+[MIT](./LICENSE) © 2025-present CHENY
 
-═══════════════════════════════════════════════════════════
-🎉 代码类型系统状态良好，继续保持！
-═══════════════════════════════════════════════════════════
-```
+## 作者
 
-### Markdown 报告
-
-工具会在 `type-reports/` 目录下生成详细的 Markdown 报告，包含：
-
-- 📋 执行摘要和健康度评分
-- 📊 详细统计数据表格  
-- 🚨 类型错误详情（文件、行号、错误信息）
-- ⚠️ 重复类型定义位置
-- 🗑️ 未使用类型列表
-- 💡 具体的修复建议
-- 🔧 快速修复指南
-
-## 🎯 检测能力
-
-### 类型错误检测
-- `TS2322` - 类型不匹配
-- `TS2345` - 参数类型错误  
-- `TS2304` - 找不到名称
-- `TS2339` - 属性不存在
-- `TS2571` - 对象类型未知
-- `TS2531` - 对象可能为空
-- `TS2532` - 对象可能未定义
-
-### 重复类型检测
-- 跨文件的同名类型定义
-- 排除框架和依赖库类型
-- 提供具体位置和合并建议
-
-### 未使用类型检测  
-- 定义但未引用的类型
-- 自动排除导出类型
-- 支持安全清理
-
-## ⚙️ 配置选项
-
-### 命令行参数
-- `--root` - 指定项目根目录
-- `--threshold` - 设置健康度阈值
-- `--verbose` - 显示详细调试信息
-- `--no-report` - 跳过 Markdown 报告生成
-
-### 环境变量
-```bash
-# 启用详细模式
-VTC_VERBOSE=true npx ts-type-cleaner analyze
-
-# 设置默认阈值
-VTC_THRESHOLD=80 npx ts-type-cleaner check
-```
-
-## 🚧 项目要求
-
-- **Node.js** >= 16.0.0
-- **TypeScript** >= 4.5.0
-- **Vue** >= 3.0.0 (可选，仅分析 .vue 文件时需要)
-
-## 📂 目录结构
-
-工具只扫描 `src/` 目录下的文件：
-
-```
-your-project/
-├── src/                    # ✅ 会被扫描
-│   ├── components/         # ✅ Vue 组件
-│   ├── types/             # ✅ 类型定义
-│   ├── utils/             # ✅ 工具函数
-│   └── views/             # ✅ 页面组件
-├── node_modules/          # ❌ 自动跳过
-├── dist/                  # ❌ 自动跳过  
-└── type-reports/          # 📋 报告输出目录
-    └── type-analysis-2024-01-15.md
-```
-
-## 🔍 支持的文件类型
-
-- **`.ts`** - TypeScript 文件
-- **`.tsx`** - TypeScript JSX 文件  
-- **`.vue`** - Vue 单文件组件 (需要 `<script lang="ts">`)
-
-## ❓ 常见问题
-
-### Q: 为什么某些 Vue 组件没有被检测？
-**A:** 确保 Vue 文件使用了 `<script lang="ts">` 或 `<script setup lang="ts">`。
-
-### Q: 如何排除某些文件？
-**A:** 工具会自动排除 `.d.ts`、`.test.ts`、`.spec.ts` 文件和 `node_modules` 目录。
-
-### Q: 健康度评分如何计算？
-**A:** 基于以下权重计算：
-- 类型错误：50%（每个错误扣 10 分）
-- 重复定义：25%（按比例扣分）
-- 未使用类型：15%（按比例扣分）
-
-### Q: 可以在 monorepo 中使用吗？
-**A:** 可以，通过 `--root` 参数指定每个子包的根目录。
-
-### Q: 报告文件保存在哪里？
-**A:** 默认保存在项目根目录的 `type-reports/` 文件夹中。
-
-## 🛠️ 高级用法
-
-### 编程式调用
-
-```javascript
-import { analyzeProject, quickCheck, getProjectStats } from 'ts-type-cleaner'
-
-// 完整分析
-const report = await analyzeProject({
-  rootDir: './my-project',
-  verbose: true
-})
-
-// 快速检查
-const result = await quickCheck({
-  rootDir: './my-project',
-  threshold: 80
-})
-
-console.log(result.passed ? '✅ 通过' : '❌ 失败')
-
-// 获取统计数据
-const stats = await getProjectStats({
-  rootDir: './my-project'
-})
-
-console.log(`发现 ${stats.errors} 个错误`)
-```
-
-### 自定义报告
-
-```javascript
-import { TypeAnalyzer, ReportGenerator } from 'ts-type-cleaner'
-
-const analyzer = new TypeAnalyzer({ rootDir: './src' })
-const report = await analyzer.analyze()
-
-const reporter = new ReportGenerator('./project')
-reporter.generateConsoleOutput(report)
-await reporter.generateMarkdownReport(report)
-```
-
-## 🎨 输出自定义
-
-### 禁用颜色输出
-```bash
-NO_COLOR=1 npx ts-type-cleaner analyze
-```
-
-### JSON 格式输出
-```bash
-npx ts-type-cleaner analyze --json > report.json
-```
-
-## 📈 性能优化
-
-### 大型项目优化
-- 工具自动跳过 `node_modules` 和构建产物
-- 使用增量分析减少重复计算
-- 内存使用优化，支持大型代码库
-
-### 并行处理
-- 多文件并行分析
-- TypeScript 编译器缓存优化
-- 智能文件过滤减少扫描范围
-
-## 🔄 版本历史
-
-### v1.0.0
-- ✨ 初始版本发布
-- 🎯 支持 Vue3 + TypeScript 项目分析
-- 📊 健康度评分系统
-- 📋 Markdown 报告生成
-
-## 🤝 贡献指南
-
-我们欢迎任何形式的贡献！
-
-### 报告问题
-- 在 [GitHub Issues](https://github.com/ChenyCHENYU/ts-type-cleaner/issues) 提交 bug 报告
-- 提供详细的复现步骤和环境信息
-
-### 功能请求
-- 在 Issues 中描述你期望的功能
-- 说明使用场景和预期效果
-
-### 代码贡献
-1. Fork 项目仓库
-2. 创建功能分支：`git checkout -b feature/amazing-feature`
-3. 提交更改：`git commit -m 'Add some amazing feature'`
-4. 推送分支：`git push origin feature/amazing-feature`
-5. 提交 Pull Request
-
-### 开发设置
-
-```bash
-# 克隆仓库
-git clone https://github.com/ChenyCHENYU/ts-type-cleaner.git
-cd ts-type-cleaner
-
-# 安装依赖
-npm install
-
-# 开发模式
-npm run dev
-
-# 运行测试
-npm test
-
-# 构建项目
-npm run build
-
-# 发布准备
-npm run prepublish
-```
-
-### 代码规范
-
-- 使用 ESLint 和 Prettier 格式化代码
-- 提交前运行 `npm run lint`
-- 保持测试覆盖率 > 80%
-
-## 📄 许可证
-
-[MIT License](LICENSE)
-
-```
-MIT License
-
-Copyright (c) 2024 TS Type Cleaner
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
-## 🙏 致谢
-
-感谢以下优秀的开源项目：
-
-- [TypeScript](https://www.typescriptlang.org/) - 强大的类型系统
-- [Vue.js](https://vuejs.org/) - 渐进式 JavaScript 框架
-- [Commander.js](https://github.com/tj/commander.js/) - 命令行工具框架
-- [Chalk](https://github.com/chalk/chalk) - 终端颜色库
-- [Ora](https://github.com/sindresorhus/ora) - 优雅的终端加载动画
-
-## 🌟 Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=ChenyCHENYU/ts-type-cleaner&type=Date)](https://star-history.com/#ChenyCHENYU/ts-type-cleaner&Date)
+**CHENY** · [GitHub @ChenyCHENYU](https://github.com/ChenyCHENYU)
 
 ---
 
-**如果这个工具对你有帮助，请给个 ⭐️ Star 支持一下！**
-
-**Happy Coding! 🚀**
+<div align="center">
+  <sub>如果这个工具对你有帮助，欢迎点一个 ⭐ 让更多人看到。</sub>
+</div>

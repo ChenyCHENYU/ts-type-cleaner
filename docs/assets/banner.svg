@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="340" viewBox="0 0 1200 340" fill="none" role="img" aria-label="ts-type-cleaner banner">
+  <defs>
+    <linearGradient id="b-bg" x1="0" y1="0" x2="1200" y2="340" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#171E3A"/>
+      <stop offset="1" stop-color="#0A0F20"/>
+    </linearGradient>
+    <linearGradient id="b-accent" x1="70" y1="78" x2="192" y2="178" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22D3EE"/>
+      <stop offset="0.55" stop-color="#818CF8"/>
+      <stop offset="1" stop-color="#C084FC"/>
+    </linearGradient>
+    <radialGradient id="b-glow-c" cx="230" cy="170" r="230" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22D3EE" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#22D3EE" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="b-glow-r" cx="1150" cy="40" r="420" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#C084FC" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#C084FC" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="b-rim" x1="0" y1="0" x2="0" y2="340" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.02"/>
+    </linearGradient>
+    <pattern id="b-dots" width="26" height="26" patternUnits="userSpaceOnUse">
+      <circle cx="1.2" cy="1.2" r="1.2" fill="#FFFFFF" fill-opacity="0.05"/>
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="340" rx="30" fill="url(#b-bg)"/>
+  <rect x="1" y="1" width="1198" height="338" rx="29" stroke="url(#b-rim)" stroke-width="2"/>
+  <rect x="1" y="1" width="1198" height="338" rx="29" fill="url(#b-dots)"/>
+  <circle cx="230" cy="170" r="230" fill="url(#b-glow-c)"/>
+  <circle cx="1150" cy="40" r="420" fill="url(#b-glow-r)"/>
+
+  <!-- Logo：T + 清理碎屑 -->
+  <g transform="translate(86,86) scale(0.65625)">
+    <g stroke="#05070F" stroke-opacity="0.5" stroke-width="24" stroke-linecap="round" transform="translate(0,6)">
+      <path d="M84 88 H172"/>
+      <path d="M128 100 V168"/>
+    </g>
+    <g stroke="url(#b-accent)" stroke-width="22" stroke-linecap="round">
+      <path d="M84 84 H172"/>
+      <path d="M128 96 V164"/>
+    </g>
+    <circle cx="168" cy="176" r="6" fill="url(#b-accent)" opacity="0.9"/>
+    <circle cx="186" cy="188" r="4.5" fill="url(#b-accent)" opacity="0.6"/>
+    <circle cx="200" cy="170" r="3.5" fill="url(#b-accent)" opacity="0.35"/>
+  </g>
+
+  <text x="316" y="150" fill="#F4F6FB" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="54" font-weight="700" letter-spacing="0.5">ts-type-cleaner</text>
+  <text x="318" y="196" fill="#9AA3BC" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif" font-size="21">未使用类型检测 · 重复定义发现 · TypeScript 编译器驱动</text>
+
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="14.5">
+    <rect x="316" y="224" width="112" height="32" rx="16" fill="#FFFFFF" fill-opacity="0.06" stroke="#FFFFFF" stroke-opacity="0.16"/>
+    <text x="372" y="244.5" fill="#C7CDE0" text-anchor="middle">TypeScript</text>
+    <rect x="440" y="224" width="118" height="32" rx="16" fill="#FFFFFF" fill-opacity="0.06" stroke="#FFFFFF" stroke-opacity="0.16"/>
+    <text x="499" y="244.5" fill="#C7CDE0" text-anchor="middle">Vue3 · React</text>
+    <rect x="570" y="224" width="66" height="32" rx="16" fill="#FFFFFF" fill-opacity="0.06" stroke="#FFFFFF" stroke-opacity="0.16"/>
+    <text x="603" y="244.5" fill="#C7CDE0" text-anchor="middle">CLI</text>
+    <rect x="648" y="224" width="140" height="32" rx="16" fill="#FFFFFF" fill-opacity="0.06" stroke="#FFFFFF" stroke-opacity="0.16"/>
+    <text x="718" y="244.5" fill="#C7CDE0" text-anchor="middle">Markdown 报告</text>
+  </g>
+
+  <text x="1128" y="308" fill="#626A85" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="14" text-anchor="end">by CHENY · github.com/ChenyCHENYU</text>
+</svg>
