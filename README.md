@@ -54,7 +54,7 @@ npm install ts-type-cleaner --save-dev
 | `-t, --threshold <number>` | 健康度阈值（check） | `70` |
 
 ```bash
-# 完整分析（生成 TYPE_ANALYSIS_REPORT.md）
+# 完整分析（生成 type-reports/type-analysis-<日期>.md）
 npx ts-type-cleaner analyze
 
 # CI 卡点：健康度低于 80 直接失败
@@ -83,7 +83,7 @@ npx ts-type-cleaner summary
   ...
 ```
 
-Markdown 报告包含完整清单与文件行号，可直接贴进 issue 或文档。
+Markdown 报告写入 `type-reports/type-analysis-YYYY-MM-DD.md`（目录不存在会自动创建），包含完整清单与文件行号，可直接贴进 issue 或文档。
 
 ## 工作原理
 
