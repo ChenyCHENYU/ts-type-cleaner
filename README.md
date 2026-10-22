@@ -40,7 +40,7 @@ npm install ts-type-cleaner --save-dev
 
 | 命令 | 别名 | 作用 |
 |------|------|------|
-| `analyze` | `a` | 完整分析：未使用类型 + 重复定义 + 类型错误，生成控制台报告与 Markdown 报告 |
+| `analyze` | `a` | 完整分析：未使用类型 + 同名类型 + 类型错误，支持 `--fix` 生成/执行删除计划 |
 | `check` | `c` | 快速检查类型错误并计算健康度，低于阈值时以非零码退出（适合 CI） |
 | `summary` | `s` | 项目类型统计概览（定义数 / 使用数 / 健康度） |
 
@@ -52,6 +52,10 @@ npm install ts-type-cleaner --save-dev
 | `--allow <names>` | 公共 API 白名单，逗号分隔——面向消费者的导出不计为未使用 | 无 |
 | `--ignore-pattern <names>` | 命名豁免追加后缀，逗号分隔（默认仅豁免 Vue 惯用名 `Props` / `Emits`） | 无 |
 | `--max-unused <number>` | 允许的未使用类型上限，超出即非零退出（`check`，适合 CI 卡 unused） | 不限制 |
+| `--fix` | 生成未使用类型的删除计划（dry-run 只预览不写盘） | 关闭 |
+| `--write` | 配合 `--fix` 实际写盘：删整块声明 → 重跑 tsc 验证 → 有新增错误则整体回滚 | 关闭 |
+| `--no-errors` | 跳过类型错误检测，只查未使用/同名（1k 文件约 1s；`--fix` 时强制完整检测） | 关闭 |
+| `--error-engine <engine>` | 错误检测口径：`auto`（默认，装了 vue-tsc 就用）/ `tsc` / `vue-tsc` | `auto` |
 | `--json` | JSON 纯净输出（隐含不生成 Markdown 报告；`check` 额外返回 `passed` 结论字段） | 关闭 |
 | `-v, --verbose` | 显示详细分析过程（analyze） | 关闭 |
 | `--no-report` | 不生成 Markdown 报告（analyze） | 生成 |
@@ -66,6 +70,15 @@ npx ts-type-cleaner check -t 80
 
 # 统计概览
 npx ts-type-cleaner summary
+
+# 生成删除计划（dry-run，只预览）
+npx ts-type-cleaner analyze --fix
+
+# 实际删除：删整块声明 → 验证无新增类型错误，失败自动回滚
+npx ts-type-cleaner analyze --fix --write
+
+# 日常快速清理（跳过错误检测）
+npx ts-type-cleaner analyze --no-errors --fix
 ```
 
 ## 输出示例
@@ -94,19 +107,26 @@ Markdown 报告写入 `type-reports/type-analysis-YYYY-MM-DD.md`（目录不存�
 2. **收集**：TypeScript Compiler API 收集类型定义与全量类型引用（含 `.vue` `<script>` 块，行号已换算回 `.vue` 文件真实行号；自引用如 `type Tree = { children: Tree[] }` 不计为使用）
 3. **双引擎交叉验证**：ts-unused-exports 判定「导出无人 import」→ 再用自收集的引用（含 `.vue`）否决——**只被 .vue 使用的类型不会被误报**；未导出的局部类型由内置检测补充（ts-unused-exports 的盲区）。引擎异常时**显式警告**并降级为基础检测（不再静默）
 4. **降噪**：内置 Vue3 / Pinia / Naive UI 常见全局 API 排除清单；命名豁免默认仅 `Props` / `Emits`（Vue SFC 惯用名），可用 `--ignore-pattern` 追加，豁免数量在报告中如实展示
-5. **口径一致**：类型错误检测加载项目自身 `tsconfig.json` 的编译选项，与项目 `tsc` 判定同源
+5. **错误口径**：默认 `auto`——项目装了 `vue-tsc` 时用它检测（`.vue` 文件的类型错误首次可见；
+   纯 tsc 看不见 `.vue` 模块真实类型，`import` 一律 `any` 并产生级联噪音）；未装则用内嵌 tsc
+   （同样加载项目 `tsconfig.json` 编译选项，与项目 `tsc` 判定同源）
 6. **报告**：汇总健康度并渲染控制台输出 + Markdown 报告
 
 **扫描约定**：默认扫描 `src/`（`--src` 可改），跳过 `src/stores/**`（团队内部约定）；`--exclude` 可追加排除目录。
 
-**健康度评分**（满分 100）：类型错误每个 -15（最多 -60）；未使用类型按占比扣分（最多 -15）。跨文件同名类型是提示项而非错误，不扣分。
+**健康度评分**（满分 100）：类型错误每个 -15（最多 -60）；未使用类型按占比扣分（最多 -15）。跨文件同名类型是提示项而非错误，不扣分。`--no-errors` 时跳过错误项（报告中如实标注 `errorsSkipped`）。
 
 ## FAQ
 
 <details>
 <summary><b>它会自动删除未使用类型吗？</b></summary>
 
-不会。工具只做检测与报告，避免误删；根据报告人工确认后清理更安全。
+`analyze --fix` 生成删除计划（dry-run 预览），加 `--write` 才写盘。安全机制：
+
+- 只删 `.ts` / `.tsx` 中的**整块声明**（interface / type / enum，含 `export`）；
+  `.vue` 内的未使用类型只报告不自动删（.vue 不在 tsc 验证覆盖内）
+- 写盘后自动重跑 tsc 验证，出现**任何新增错误即整体回滚**
+- 删除计划基于交叉验证后的结果（.vue 引用、自引用、extends/值使用均已排除误报）
 
 </details>
 

@@ -190,3 +190,92 @@ describe('CLI check --max-unused', () => {
     assert.ok(status !== 0, '超上限应非零退出')
   })
 })
+
+describe('skipErrors 快速模式', () => {
+  it('--no-errors 应跳过错误检测并如实标注', async () => {
+    const analyzer = new TypeAnalyzer({ rootDir: fixtureDir, skipErrors: true, verbose: false })
+    const report = await analyzer.analyze()
+    assert.equal(report.errorsSkipped, true)
+    assert.equal(report.errorEngine, 'skipped')
+    assert.equal(report.statistics.totalErrors, 0)
+  })
+})
+
+describe('vue-tsc 错误口径', () => {
+  it('auto 模式下未装 vue-tsc 应回退纯 tsc', async () => {
+    // fixture 目录没有 node_modules/vue-tsc
+    const { report } = await analyzeFixture()
+    assert.equal(report.errorEngine, 'tsc')
+  })
+
+  it('parseCompilerDiagnostics 应解析新旧两种输出格式', async () => {
+    const { parseCompilerDiagnostics } = await import('../lib/analyzer.js')
+    const text = [
+      "src/a.vue:12:5 - error TS2322: Type 'x' is not assignable to type 'y'.",
+      "src/b.ts(3,1): error TS2304: Cannot find name 'foo'.",
+      "some unrelated line",
+      "src/c.ts:1:1 - warning TS6133: 'u' is declared but never used.",
+    ].join('\n')
+    const parsed = parseCompilerDiagnostics(text)
+    assert.equal(parsed.length, 3)
+    assert.deepEqual(parsed[0], { file: 'src/a.vue', line: 12, column: 5, severity: 'error', code: 'TS2322', message: "Type 'x' is not assignable to type 'y'." })
+    assert.equal(parsed[1].file, 'src/b.ts')
+    assert.equal(parsed[1].line, 3)
+    assert.equal(parsed[2].severity, 'warning')
+  })
+})
+
+describe('TypeFixer 删除器', () => {
+  it('dry-run 计划应定位整块声明区间，且不写盘', async () => {
+    const { TypeFixer } = await import('../lib/fixer.js')
+    const { readFileSync } = await import('fs')
+    const { report } = await analyzeFixture()
+
+    const fixer = new TypeFixer(fixtureDir)
+    const { plans, skipped } = fixer.planFixes(report.issues.unused)
+
+    const role = plans.flatMap(p => p.removals).find(r => r.name === 'Role')
+    assert.ok(role, '应包含 Role 的删除计划')
+    assert.equal(role.startLine, 12)
+    assert.equal(role.endLine, 15, 'Role 枚举声明占 types.ts 第 12-15 行')
+
+    // dry-run 不写盘：所有文件内容未变
+    for (const plan of plans) {
+      assert.equal(readFileSync(plan.file, 'utf8'), plan.original, 'dry-run 不得写盘')
+    }
+    // .vue 内的未使用类型（VueLocal）只跳过不删
+    assert.ok(skipped.some(s => s.name === 'VueLocal' && /\.vue/.test(s.file)), '.vue 声明应跳过并说明原因')
+  })
+
+  it('apply + verify 应安全删除（副本目录验证后内容正确）', async () => {
+    const { TypeFixer } = await import('../lib/fixer.js')
+    const { cpSync, readFileSync, rmSync, mkdirSync } = await import('fs')
+    const tmp = join(import.meta.dirname, '..', '.tmp-fix-test')
+    rmSync(tmp, { recursive: true, force: true })
+    cpSync(fixtureDir, tmp, { recursive: true })
+
+    try {
+      const analyzer = new TypeAnalyzer({ rootDir: tmp, verbose: false })
+      const report = await analyzer.analyze()
+
+      const fixer = new TypeFixer(tmp)
+      const { plans } = fixer.planFixes(report.issues.unused)
+      assert.ok(plans.length > 0)
+      fixer.apply(plans)
+
+      const { newErrors } = fixer.verify(analyzer, report.issues.errors)
+      assert.equal(newErrors.length, 0, '删除真实未使用类型不得引入新错误')
+
+      const types = readFileSync(join(tmp, 'src', 'types.ts'), 'utf8')
+      assert.ok(!types.includes('enum Role'), 'Role 声明应被删除')
+      assert.ok(types.includes('UserInfo'), '在用的 UserInfo 不得被删')
+
+      // 删后再分析：未使用数应显著减少（Role/UnusedLocal/SelfRef/PanelProps 之外的仍可能存在）
+      const re = new TypeAnalyzer({ rootDir: tmp, verbose: false })
+      const report2 = await re.analyze()
+      assert.ok(report2.statistics.unusedTypes < report.statistics.unusedTypes, '删除后未使用数应减少')
+    } finally {
+      rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+})

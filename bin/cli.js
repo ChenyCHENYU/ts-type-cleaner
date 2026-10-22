@@ -33,6 +33,10 @@ program
   .option('--json', 'JSON 格式输出（隐含不生成 Markdown 报告）', false)
   .option('-v, --verbose', '显示详细信息', false)
   .option('--no-report', '不生成 Markdown 报告')
+  .option('--fix', '生成未使用类型的删除计划（默认 dry-run 只预览不写盘）', false)
+  .option('--write', '配合 --fix 实际写盘（写盘后自动跑错误验证，失败整体回滚）', false)
+  .option('--no-errors', '跳过类型错误检测（日常清理更快；--fix 时强制完整检测）')
+  .option('--error-engine <engine>', '错误检测口径：auto | tsc | vue-tsc（默认 auto：装了 vue-tsc 就用）', 'auto')
   .action(async (options) => {
     const spinner = ora('🔍 正在分析类型...').start()
     
@@ -44,7 +48,8 @@ program
         allow: (options.allow || '').split(',').map(s => s.trim()).filter(Boolean),
         ignorePattern: (options.ignorePattern || '').split(',').map(s => s.trim()).filter(Boolean),
         // --fix 需要错误数据做删除后验证的基线，强制完整检测
-        skipErrors: options.fix ? false : options.noErrors,
+        // commander 的 --no-errors 写入 options.errors（传参后为 false）
+        skipErrors: options.fix ? false : options.errors === false,
         errorEngine: options.errorEngine,
         verbose: options.verbose
       })
@@ -134,7 +139,7 @@ program
   .option('--json', 'JSON 格式输出（隐含不生成 Markdown 报告）', false)
   .option('-t, --threshold <number>', '健康度阈值', '70')
   .option('--max-unused <number>', '允许的未使用类型上限，超出则以非零码退出', '')
-  .option('--no-errors', '跳过类型错误检测（仅卡 unused 与健康度）', false)
+  .option('--no-errors', '跳过类型错误检测（仅卡 unused 与健康度）')
   .option('--error-engine <engine>', '错误检测口径：auto | tsc | vue-tsc', 'auto')
   .action(async (options) => {
     const spinner = ora('🎯 正在检查...').start()
@@ -146,7 +151,7 @@ program
         exclude: (options.exclude || '').split(',').map(s => s.trim()).filter(Boolean),
         allow: (options.allow || '').split(',').map(s => s.trim()).filter(Boolean),
         ignorePattern: (options.ignorePattern || '').split(',').map(s => s.trim()).filter(Boolean),
-        skipErrors: options.noErrors || false,
+        skipErrors: options.errors === false,
         errorEngine: options.errorEngine || 'auto',
         verbose: false
       })
@@ -239,7 +244,7 @@ program
   .option('--allow <names>', '公共 API 白名单，逗号分隔（不计为未使用）', '')
   .option('--ignore-pattern <names>', '命名豁免追加后缀，逗号分隔（默认仅豁免 Vue 惯用名 Props/Emits）', '')
   .option('--json', 'JSON 格式输出（隐含不生成 Markdown 报告）', false)
-  .option('--no-errors', '跳过类型错误检测', false)
+  .option('--no-errors', '跳过类型错误检测')
   .option('--error-engine <engine>', '错误检测口径：auto | tsc | vue-tsc', 'auto')
   .action(async (options) => {
     const spinner = ora('📈 正在统计...').start()
@@ -251,7 +256,7 @@ program
         exclude: (options.exclude || '').split(',').map(s => s.trim()).filter(Boolean),
         allow: (options.allow || '').split(',').map(s => s.trim()).filter(Boolean),
         ignorePattern: (options.ignorePattern || '').split(',').map(s => s.trim()).filter(Boolean),
-        skipErrors: options.noErrors || false,
+        skipErrors: options.errors === false,
         errorEngine: options.errorEngine || 'auto',
         verbose: false
       })
