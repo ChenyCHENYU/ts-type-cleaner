@@ -63,20 +63,24 @@ program
       } else {
         spinner.succeed('✅ 分析完成')
 
-        // 生成控制台输出
+        // 生成控制台输出（带与上次快照的趋势对比；--json 保持纯净不读不写快照）
         const reporter = new ReportGenerator(options.root)
-        reporter.generateConsoleOutput(report)
+        const trend = reporter.loadTrend(report.statistics)
+        reporter.generateConsoleOutput(report, trend)
 
-        // 生成 Markdown 报告
         if (options.report !== false) {
-          await reporter.generateMarkdownReport(report)
+          // 生成 Markdown 报告（内部更新趋势快照）
+          await reporter.generateMarkdownReport(report, trend)
+        } else {
+          // --no-report 也要更新快照，否则下次趋势断档
+          reporter.saveSnapshot(report)
         }
       }
       
       // --fix：生成删除计划；--write 才写盘（验证失败自动回滚）
       if (options.fix) {
         spinner.stop()
-        const fixer = new TypeFixer(options.root)
+        const fixer = new TypeFixer(options.root, { canVerifyVue: analyzer.hasVueTsc() })
         const { plans, skipped } = fixer.planFixes(report.issues.unused)
 
         if (plans.length === 0 && skipped.length === 0) {
@@ -97,7 +101,7 @@ program
 
           if (options.write && plans.length > 0) {
             fixer.apply(plans)
-            const { newErrors } = fixer.verify(analyzer, report.issues.errors)
+            const { newErrors } = await fixer.verify(analyzer, report.issues.errors)
             if (newErrors.length > 0) {
               fixer.revert(plans)
               console.log(chalk.red.bold(`\n❌ 删除后验证发现 ${newErrors.length} 个新增类型错误，已整体回滚`))

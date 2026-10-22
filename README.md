@@ -6,6 +6,7 @@
 
 [![npm version](https://img.shields.io/npm/v/ts-type-cleaner?style=flat-square&color=818CF8&labelColor=0B1020)](https://www.npmjs.com/package/ts-type-cleaner)
 [![npm downloads](https://img.shields.io/npm/dm/ts-type-cleaner?style=flat-square&color=22D3EE&labelColor=0B1020)](https://www.npmjs.com/package/ts-type-cleaner)
+[![CI](https://img.shields.io/github/actions/workflow/status/ChenyCHENYU/ts-type-cleaner/ci.yml?branch=main&style=flat-square&label=CI&labelColor=0B1020)](https://github.com/ChenyCHENYU/ts-type-cleaner/actions)
 [![License](https://img.shields.io/badge/License-MIT-C084FC?style=flat-square&labelColor=0B1020)](./LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-%E2%89%A5%204.5-3178C6?style=flat-square&labelColor=0B1020&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Node](https://img.shields.io/badge/Node-%E2%89%A5%2018-5FA04E?style=flat-square&labelColor=0B1020&logo=node.js&logoColor=white)](https://nodejs.org/)
@@ -101,6 +102,8 @@ npx ts-type-cleaner analyze --no-errors --fix
 
 Markdown 报告写入 `type-reports/type-analysis-YYYY-MM-DD.md`（目录不存在会自动创建），包含完整清单与文件行号，可直接贴进 issue 或文档。
 
+每次运行还会更新趋势快照 `type-reports/last-report.json`，下次运行时控制台与 Markdown 报告会显示**较上次的差值**（未使用 / 类型错误 / 同名类型），适合周清理与 CI 观察；`--json` 模式保持纯净输出、不读写快照。建议把 `type-reports/` 加入 `.gitignore`。
+
 ## 工作原理
 
 1. **扫描**：遍历 `src/` 下 `.ts` / `.tsx` / `.vue` 文件（跳过 `.d.ts` 与 `node_modules`）
@@ -123,9 +126,9 @@ Markdown 报告写入 `type-reports/type-analysis-YYYY-MM-DD.md`（目录不存�
 
 `analyze --fix` 生成删除计划（dry-run 预览），加 `--write` 才写盘。安全机制：
 
-- 只删 `.ts` / `.tsx` 中的**整块声明**（interface / type / enum，含 `export`）；
-  `.vue` 内的未使用类型只报告不自动删（.vue 不在 tsc 验证覆盖内）
-- 写盘后自动重跑 tsc 验证，出现**任何新增错误即整体回滚**
+- 只删**整块声明**（interface / type / enum，含 `export`）：`.ts` / `.tsx` 始终可删；
+  `.vue` 内的声明在项目装有 vue-tsc（可做删除后验证）时同样可删，否则仅报告
+- 写盘后按本次分析口径重跑验证（vue-tsc 或 tsc），出现**任何新增错误即整体回滚**
 - 删除计划基于交叉验证后的结果（.vue 引用、自引用、extends/值使用均已排除误报）
 
 </details>

@@ -263,7 +263,7 @@ describe('TypeFixer 删除器', () => {
       assert.ok(plans.length > 0)
       fixer.apply(plans)
 
-      const { newErrors } = fixer.verify(analyzer, report.issues.errors)
+      const { newErrors } = await fixer.verify(analyzer, report.issues.errors)
       assert.equal(newErrors.length, 0, '删除真实未使用类型不得引入新错误')
 
       const types = readFileSync(join(tmp, 'src', 'types.ts'), 'utf8')
@@ -277,5 +277,88 @@ describe('TypeFixer 删除器', () => {
     } finally {
       rmSync(tmp, { recursive: true, force: true })
     }
+  })
+})
+
+describe('TypeFixer 回滚保护', () => {
+  it('验证发现新增错误时应整体回滚，文件内容与删除前完全一致', async () => {
+    const { TypeFixer } = await import('../lib/fixer.js')
+    const { cpSync, readFileSync, rmSync } = await import('fs')
+    const tmp = join(import.meta.dirname, '..', '.tmp-fix-rollback')
+    rmSync(tmp, { recursive: true, force: true })
+    cpSync(fixtureDir, tmp, { recursive: true })
+
+    try {
+      const analyzer = new TypeAnalyzer({ rootDir: tmp, verbose: false })
+      const report = await analyzer.analyze()
+
+      // 伪造：把在用的 UserInfo（types.ts:1，被 usage.ts 消费）塞进 unused
+      const poisoned = [
+        ...report.issues.unused,
+        { name: 'UserInfo', type: 'interface', file: 'src/types.ts', line: 1 },
+      ]
+      const fixer = new TypeFixer(tmp)
+      const { plans } = fixer.planFixes(poisoned)
+      const userInfoPlan = plans.find(p => p.removals.some(r => r.name === 'UserInfo'))
+      assert.ok(userInfoPlan, 'UserInfo 应进入删除计划（fixer 不做使用判断，靠验证兜底）')
+      const before = readFileSync(userInfoPlan.file, 'utf8')
+
+      fixer.apply(plans)
+      const { newErrors } = await fixer.verify(analyzer, report.issues.errors)
+      assert.ok(newErrors.length > 0, '删除在用类型必须产生新增错误（usage.ts 引用断裂）')
+
+      fixer.revert(plans)
+      assert.equal(readFileSync(userInfoPlan.file, 'utf8'), before, '回滚后内容必须与删除前逐字节一致')
+    } finally {
+      rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('趋势对比', () => {
+  it('saveSnapshot 后 loadTrend 应返回正确差值', async () => {
+    const { cpSync, rmSync } = await import('fs')
+    const tmp = join(import.meta.dirname, '..', '.tmp-trend-test')
+    rmSync(tmp, { recursive: true, force: true })
+    cpSync(fixtureDir, tmp, { recursive: true })
+
+    try {
+      const reporter = new ReportGenerator(tmp)
+      const { report } = await (async () => {
+        const a = new TypeAnalyzer({ rootDir: tmp, verbose: false })
+        return { report: await a.analyze() }
+      })()
+
+      // 首次：无快照 → null；保存后差值为 0
+      assert.equal(reporter.loadTrend(report.statistics), null)
+      reporter.saveSnapshot(report)
+      const same = reporter.loadTrend(report.statistics)
+      assert.equal(same.unused, 0)
+      assert.equal(same.errors, 0)
+
+      // 模拟"下次"：unused +3、errors +5 的统计
+      const nextStats = {
+        ...report.statistics,
+        unusedTypes: report.statistics.unusedTypes + 3,
+        totalErrors: report.statistics.totalErrors + 5,
+      }
+      const trend = reporter.loadTrend(nextStats)
+      assert.equal(trend.unused, 3)
+      assert.equal(trend.errors, 5)
+    } finally {
+      rmSync(tmp, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('.vue 声明定位（fix 前置能力）', () => {
+  it('findDeclExtent 应将 script 内行号换算回 .vue 全局行号', async () => {
+    const { TypeFixer } = await import('../lib/fixer.js')
+    const { readFileSync } = await import('fs')
+    const fixer = new TypeFixer(fixtureDir)
+    const content = readFileSync(join(fixtureDir, 'src', 'comp.vue'), 'utf8')
+    // VueLocal 声明在 comp.vue 第 5-7 行（script 内第 4-6 行 + 偏移 1）
+    const extent = fixer.findDeclExtent(content, join(fixtureDir, 'src', 'comp.vue'), 'VueLocal', 5)
+    assert.deepEqual(extent, [5, 7], '.vue 删除区间的行号必须已换算为文件全局行号')
   })
 })
