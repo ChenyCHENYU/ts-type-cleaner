@@ -27,6 +27,8 @@ program
   .option('-r, --root <path>', '项目根目录', process.cwd())
   .option('--src <dir>', '源码目录（相对 root）', 'src')
   .option('--exclude <dirs>', '追加排除目录，逗号分隔', '')
+  .option('--allow <names>', '公共 API 白名单，逗号分隔（不计为未使用）', '')
+  .option('--json', 'JSON 格式输出（隐含不生成 Markdown 报告）', false)
   .option('-v, --verbose', '显示详细信息', false)
   .option('--no-report', '不生成 Markdown 报告')
   .action(async (options) => {
@@ -37,19 +39,27 @@ program
         rootDir: options.root,
         srcDir: options.src,
         exclude: (options.exclude || '').split(',').map(s => s.trim()).filter(Boolean),
+        allow: (options.allow || '').split(',').map(s => s.trim()).filter(Boolean),
         verbose: options.verbose
       })
       
       const report = await analyzer.analyze()
-      spinner.succeed('✅ 分析完成')
-      
-      // 生成控制台输出
-      const reporter = new ReportGenerator(options.root)
-      reporter.generateConsoleOutput(report)
-      
-      // 生成 Markdown 报告
-      if (options.report !== false) {
-        await reporter.generateMarkdownReport(report)
+
+      // JSON 输出：纯净数据，隐含不生成 Markdown 报告
+      if (options.json) {
+        spinner.stop()
+        console.log(JSON.stringify(report, null, 2))
+      } else {
+        spinner.succeed('✅ 分析完成')
+
+        // 生成控制台输出
+        const reporter = new ReportGenerator(options.root)
+        reporter.generateConsoleOutput(report)
+
+        // 生成 Markdown 报告
+        if (options.report !== false) {
+          await reporter.generateMarkdownReport(report)
+        }
       }
       
       // 根据结果设置退出码
@@ -75,6 +85,8 @@ program
   .option('-r, --root <path>', '项目根目录', process.cwd())
   .option('--src <dir>', '源码目录（相对 root）', 'src')
   .option('--exclude <dirs>', '追加排除目录，逗号分隔', '')
+  .option('--allow <names>', '公共 API 白名单，逗号分隔（不计为未使用）', '')
+  .option('--json', 'JSON 格式输出（隐含不生成 Markdown 报告）', false)
   .option('-t, --threshold <number>', '健康度阈值', '70')
   .action(async (options) => {
     const spinner = ora('🎯 正在检查...').start()
@@ -84,6 +96,7 @@ program
         rootDir: options.root,
         srcDir: options.src,
         exclude: (options.exclude || '').split(',').map(s => s.trim()).filter(Boolean),
+        allow: (options.allow || '').split(',').map(s => s.trim()).filter(Boolean),
         verbose: false
       })
       
@@ -93,6 +106,20 @@ program
       const threshold = parseInt(options.threshold)
       const hasErrors = report.issues.errors.length > 0
       const lowScore = report.healthScore < threshold
+
+      // JSON 输出：纯净数据 + 结论字段
+      if (options.json) {
+        console.log(JSON.stringify({
+          passed: !hasErrors && !lowScore,
+          healthScore: report.healthScore,
+          threshold,
+          errors: report.issues.errors.length,
+          duplicates: Object.keys(report.issues.duplicates).length,
+          unused: report.issues.unused.length
+        }, null, 2))
+        if (hasErrors || lowScore) process.exit(1)
+        return
+      }
       
       // 简化输出
       console.log('\n' + '─'.repeat(50))
@@ -146,6 +173,8 @@ program
   .option('-r, --root <path>', '项目根目录', process.cwd())
   .option('--src <dir>', '源码目录（相对 root）', 'src')
   .option('--exclude <dirs>', '追加排除目录，逗号分隔', '')
+  .option('--allow <names>', '公共 API 白名单，逗号分隔（不计为未使用）', '')
+  .option('--json', 'JSON 格式输出（隐含不生成 Markdown 报告）', false)
   .action(async (options) => {
     const spinner = ora('📈 正在统计...').start()
     
@@ -154,6 +183,7 @@ program
         rootDir: options.root,
         srcDir: options.src,
         exclude: (options.exclude || '').split(',').map(s => s.trim()).filter(Boolean),
+        allow: (options.allow || '').split(',').map(s => s.trim()).filter(Boolean),
         verbose: false
       })
       
@@ -161,6 +191,12 @@ program
       spinner.stop()
       
       const stats = report.statistics
+
+      // JSON 输出：纯净统计
+      if (options.json) {
+        console.log(JSON.stringify({ statistics: stats, healthScore: report.healthScore }, null, 2))
+        return
+      }
       
       console.log('\n' + '═'.repeat(40))
       console.log(chalk.cyan.bold('📈 项目类型统计'))

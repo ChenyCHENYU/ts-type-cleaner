@@ -1,6 +1,6 @@
 {
   "name": "ts-type-cleaner",
-  "version": "5.2.1",
+  "version": "5.3.0",
   "description": "TypeScript 类型分析工具 - 自动发现未使用类型、重复定义与类型错误（Vue3/React 项目友好）",
   "type": "module",
   "main": "./lib/index.js",

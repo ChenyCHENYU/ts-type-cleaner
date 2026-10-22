@@ -49,6 +49,8 @@ npm install ts-type-cleaner --save-dev
 | `-r, --root <path>` | 项目根目录 | 当前目录 |
 | `--src <dir>` | 源码目录（相对 root） | `src` |
 | `--exclude <dirs>` | 追加排除目录，逗号分隔（如 `generated,legacy`） | 无 |
+| `--allow <names>` | 公共 API 白名单，逗号分隔——面向消费者的导出不计为未使用 | 无 |
+| `--json` | JSON 纯净输出（隐含不生成 Markdown 报告；`check` 额外返回 `passed` 结论字段） | 关闭 |
 | `-v, --verbose` | 显示详细分析过程（analyze） | 关闭 |
 | `--no-report` | 不生成 Markdown 报告（analyze） | 生成 |
 | `-t, --threshold <number>` | 健康度阈值（check） | `70` |
@@ -90,6 +92,7 @@ Markdown 报告写入 `type-reports/type-analysis-YYYY-MM-DD.md`（目录不存�
 1. **扫描**：遍历 `src/` 下 `.ts` / `.tsx` / `.vue` 文件（跳过 `.d.ts` 与 `node_modules`）
 2. **双引擎检测**：TypeScript Compiler API 收集类型定义与引用 → ts-unused-exports 交叉验证导出使用情况；任一引擎异常时自动降级为内置的基础检测
 3. **降噪**：内置 Vue3 / Pinia / Naive UI 常见全局 API 排除清单，避免框架 API 被误报
+4. **口径一致**：类型错误检测加载项目自身 `tsconfig.json` 的编译选项，与项目 `tsc` 判定同源
 4. **报告**：汇总健康度并渲染控制台输出 + Markdown 报告
 
 **扫描约定**：默认扫描 `src/`（`--src` 可改），跳过 `src/stores/**`（团队内部约定）；`--exclude` 可追加排除目录。
@@ -119,12 +122,14 @@ Markdown 报告写入 `type-reports/type-analysis-YYYY-MM-DD.md`（目录不存�
 - run: npx ts-type-cleaner check -t 80
 ```
 
+需要结构化结果时加 `--json`：输出 `passed` / `healthScore` / `errors` / `unused` 等字段，退出码语义不变（未通过仍非零退出）。
+
 </details>
 
 <details>
 <summary><b>检测结果可信吗？误报怎么办？</b></summary>
 
-双引擎交叉验证 + 框架全局排除清单降低误报；动态字符串引用的类型可能被标记为未使用，删除前建议全局搜索确认一次。
+双引擎交叉验证 + 框架全局排除清单降低误报；类型错误检测采用**项目自身 tsconfig** 的编译选项，与项目 `tsc` 口径一致（不会因工具侧缺少 `esModuleInterop` 等配置产生假阳性）。两类已知误报场景：动态字符串引用的类型、库类项目面向消费者的公共导出——后者用 `--allow PublicApi,PreloadRoute` 加入白名单即可。
 
 </details>
 
