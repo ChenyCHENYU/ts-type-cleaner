@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import { TypeAnalyzer } from '../lib/analyzer.js'
 import { ReportGenerator } from '../lib/reporter.js'
+import { TypeFixer } from '../lib/fixer.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -28,6 +29,7 @@ program
   .option('--src <dir>', '源码目录（相对 root）', 'src')
   .option('--exclude <dirs>', '追加排除目录，逗号分隔', '')
   .option('--allow <names>', '公共 API 白名单，逗号分隔（不计为未使用）', '')
+  .option('--ignore-pattern <names>', '命名豁免追加后缀，逗号分隔（默认仅豁免 Vue 惯用名 Props/Emits）', '')
   .option('--json', 'JSON 格式输出（隐含不生成 Markdown 报告）', false)
   .option('-v, --verbose', '显示详细信息', false)
   .option('--no-report', '不生成 Markdown 报告')
@@ -40,6 +42,10 @@ program
         srcDir: options.src,
         exclude: (options.exclude || '').split(',').map(s => s.trim()).filter(Boolean),
         allow: (options.allow || '').split(',').map(s => s.trim()).filter(Boolean),
+        ignorePattern: (options.ignorePattern || '').split(',').map(s => s.trim()).filter(Boolean),
+        // --fix 需要错误数据做删除后验证的基线，强制完整检测
+        skipErrors: options.fix ? false : options.noErrors,
+        errorEngine: options.errorEngine,
         verbose: options.verbose
       })
       
@@ -62,6 +68,44 @@ program
         }
       }
       
+      // --fix：生成删除计划；--write 才写盘（验证失败自动回滚）
+      if (options.fix) {
+        spinner.stop()
+        const fixer = new TypeFixer(options.root)
+        const { plans, skipped } = fixer.planFixes(report.issues.unused)
+
+        if (plans.length === 0 && skipped.length === 0) {
+          console.log(chalk.green('\n✨ 没有可删除的类型声明'))
+        } else {
+          console.log('\n' + '─'.repeat(50))
+          console.log(chalk.cyan.bold(options.write ? '🔧 正在删除未使用类型...' : '🔧 删除计划（dry-run，加 --write 执行）'))
+          console.log('─'.repeat(50))
+          for (const plan of plans) {
+            console.log(`\n📄 ${chalk.blue(plan.file)}`)
+            for (const r of plan.removals) {
+              console.log(`   ✂️  删除 ${chalk.yellow(r.name)}（第 ${r.startLine}-${r.endLine} 行）`)
+            }
+          }
+          for (const item of skipped) {
+            console.log(chalk.gray(`\n⏭️  跳过 ${item.name}（${item.file}:${item.line}）— ${item.reason}`))
+          }
+
+          if (options.write && plans.length > 0) {
+            fixer.apply(plans)
+            const { newErrors } = fixer.verify(analyzer, report.issues.errors)
+            if (newErrors.length > 0) {
+              fixer.revert(plans)
+              console.log(chalk.red.bold(`\n❌ 删除后验证发现 ${newErrors.length} 个新增类型错误，已整体回滚`))
+              for (const e of newErrors.slice(0, 5)) {
+                console.log(chalk.gray(`   ${e.file}:${e.line} ${e.code} ${e.message.slice(0, 60)}`))
+              }
+              process.exit(1)
+            }
+            console.log(chalk.green.bold(`\n✅ 已删除并验证通过（无新增类型错误），共修改 ${plans.length} 个文件`))
+          }
+        }
+      }
+
       // 根据结果设置退出码
       if (report.issues.errors.length > 0) {
         process.exit(1)
@@ -86,8 +130,12 @@ program
   .option('--src <dir>', '源码目录（相对 root）', 'src')
   .option('--exclude <dirs>', '追加排除目录，逗号分隔', '')
   .option('--allow <names>', '公共 API 白名单，逗号分隔（不计为未使用）', '')
+  .option('--ignore-pattern <names>', '命名豁免追加后缀，逗号分隔（默认仅豁免 Vue 惯用名 Props/Emits）', '')
   .option('--json', 'JSON 格式输出（隐含不生成 Markdown 报告）', false)
   .option('-t, --threshold <number>', '健康度阈值', '70')
+  .option('--max-unused <number>', '允许的未使用类型上限，超出则以非零码退出', '')
+  .option('--no-errors', '跳过类型错误检测（仅卡 unused 与健康度）', false)
+  .option('--error-engine <engine>', '错误检测口径：auto | tsc | vue-tsc', 'auto')
   .action(async (options) => {
     const spinner = ora('🎯 正在检查...').start()
     
@@ -97,6 +145,9 @@ program
         srcDir: options.src,
         exclude: (options.exclude || '').split(',').map(s => s.trim()).filter(Boolean),
         allow: (options.allow || '').split(',').map(s => s.trim()).filter(Boolean),
+        ignorePattern: (options.ignorePattern || '').split(',').map(s => s.trim()).filter(Boolean),
+        skipErrors: options.noErrors || false,
+        errorEngine: options.errorEngine || 'auto',
         verbose: false
       })
       
@@ -104,20 +155,25 @@ program
       spinner.stop()
       
       const threshold = parseInt(options.threshold)
+      const maxUnused = options.maxUnused !== '' && options.maxUnused !== undefined
+        ? parseInt(options.maxUnused) : null
       const hasErrors = report.issues.errors.length > 0
       const lowScore = report.healthScore < threshold
+      const tooManyUnused = maxUnused !== null && !Number.isNaN(maxUnused)
+        && report.issues.unused.length > maxUnused
 
       // JSON 输出：纯净数据 + 结论字段
       if (options.json) {
         console.log(JSON.stringify({
-          passed: !hasErrors && !lowScore,
+          passed: !hasErrors && !lowScore && !tooManyUnused,
           healthScore: report.healthScore,
           threshold,
+          maxUnused,
           errors: report.issues.errors.length,
           duplicates: Object.keys(report.issues.duplicates).length,
           unused: report.issues.unused.length
         }, null, 2))
-        if (hasErrors || lowScore) process.exit(1)
+        if (hasErrors || lowScore || tooManyUnused) process.exit(1)
         return
       }
       
@@ -144,13 +200,20 @@ program
       
       console.log('─'.repeat(50))
       
-      if (hasErrors || lowScore) {
+      if (tooManyUnused) {
+        console.log(`🗑️ 未使用类型: ${chalk.yellow.bold(report.issues.unused.length)}（上限 ${maxUnused}）`)
+      }
+
+      if (hasErrors || lowScore || tooManyUnused) {
         console.log(chalk.red.bold('\n❌ 检查未通过'))
         if (hasErrors) {
           console.log(chalk.gray(`   发现 ${report.issues.errors.length} 个类型错误`))
         }
         if (lowScore) {
           console.log(chalk.gray(`   健康度 ${report.healthScore} 低于阈值 ${threshold}`))
+        }
+        if (tooManyUnused) {
+          console.log(chalk.gray(`   未使用类型 ${report.issues.unused.length} 个，超过上限 ${maxUnused}`))
         }
         console.log(chalk.gray('\n   运行 `ts-type-cleaner analyze` 查看详细信息'))
         process.exit(1)
@@ -174,7 +237,10 @@ program
   .option('--src <dir>', '源码目录（相对 root）', 'src')
   .option('--exclude <dirs>', '追加排除目录，逗号分隔', '')
   .option('--allow <names>', '公共 API 白名单，逗号分隔（不计为未使用）', '')
+  .option('--ignore-pattern <names>', '命名豁免追加后缀，逗号分隔（默认仅豁免 Vue 惯用名 Props/Emits）', '')
   .option('--json', 'JSON 格式输出（隐含不生成 Markdown 报告）', false)
+  .option('--no-errors', '跳过类型错误检测', false)
+  .option('--error-engine <engine>', '错误检测口径：auto | tsc | vue-tsc', 'auto')
   .action(async (options) => {
     const spinner = ora('📈 正在统计...').start()
     
@@ -184,6 +250,9 @@ program
         srcDir: options.src,
         exclude: (options.exclude || '').split(',').map(s => s.trim()).filter(Boolean),
         allow: (options.allow || '').split(',').map(s => s.trim()).filter(Boolean),
+        ignorePattern: (options.ignorePattern || '').split(',').map(s => s.trim()).filter(Boolean),
+        skipErrors: options.noErrors || false,
+        errorEngine: options.errorEngine || 'auto',
         verbose: false
       })
       
