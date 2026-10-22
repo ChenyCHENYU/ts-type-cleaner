@@ -25,6 +25,8 @@ program
   .alias('a')
   .description('📊 分析项目类型使用情况')
   .option('-r, --root <path>', '项目根目录', process.cwd())
+  .option('--src <dir>', '源码目录（相对 root）', 'src')
+  .option('--exclude <dirs>', '追加排除目录，逗号分隔', '')
   .option('-v, --verbose', '显示详细信息', false)
   .option('--no-report', '不生成 Markdown 报告')
   .action(async (options) => {
@@ -33,6 +35,8 @@ program
     try {
       const analyzer = new TypeAnalyzer({
         rootDir: options.root,
+        srcDir: options.src,
+        exclude: (options.exclude || '').split(',').map(s => s.trim()).filter(Boolean),
         verbose: options.verbose
       })
       
@@ -69,6 +73,8 @@ program
   .alias('c')
   .description('🎯 快速检查类型错误')
   .option('-r, --root <path>', '项目根目录', process.cwd())
+  .option('--src <dir>', '源码目录（相对 root）', 'src')
+  .option('--exclude <dirs>', '追加排除目录，逗号分隔', '')
   .option('-t, --threshold <number>', '健康度阈值', '70')
   .action(async (options) => {
     const spinner = ora('🎯 正在检查...').start()
@@ -76,6 +82,8 @@ program
     try {
       const analyzer = new TypeAnalyzer({
         rootDir: options.root,
+        srcDir: options.src,
+        exclude: (options.exclude || '').split(',').map(s => s.trim()).filter(Boolean),
         verbose: false
       })
       
@@ -136,12 +144,16 @@ program
   .alias('s')
   .description('📈 显示项目类型统计概览')
   .option('-r, --root <path>', '项目根目录', process.cwd())
+  .option('--src <dir>', '源码目录（相对 root）', 'src')
+  .option('--exclude <dirs>', '追加排除目录，逗号分隔', '')
   .action(async (options) => {
     const spinner = ora('📈 正在统计...').start()
     
     try {
       const analyzer = new TypeAnalyzer({
         rootDir: options.root,
+        srcDir: options.src,
+        exclude: (options.exclude || '').split(',').map(s => s.trim()).filter(Boolean),
         verbose: false
       })
       

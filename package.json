@@ -1,6 +1,6 @@
 {
   "name": "ts-type-cleaner",
-  "version": "5.1.1",
+  "version": "5.2.0",
   "description": "TypeScript 类型分析工具 - 自动发现未使用类型、重复定义与类型错误（Vue3/React 项目友好）",
   "type": "module",
   "main": "./lib/index.js",
@@ -22,7 +22,6 @@
     "analyze": "node bin/cli.js analyze",
     "check": "node bin/cli.js check",
     "summary": "node bin/cli.js summary",
-    "example": "node example.js",
     "test": "node --test test/**/*.test.js",
     "prepublishOnly": "npm run test"
   },
@@ -43,7 +42,7 @@
   "homepage": "https://github.com/ChenyCHENYU/ts-type-cleaner#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ChenyCHENYU/ts-type-cleaner.git"
+    "url": "git+https://github.com/ChenyCHENYU/ts-type-cleaner.git"
   },
   "bugs": {
     "url": "https://github.com/ChenyCHENYU/ts-type-cleaner/issues"

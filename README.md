@@ -47,6 +47,8 @@ npm install ts-type-cleaner --save-dev
 | 选项 | 说明 | 默认值 |
 |------|------|--------|
 | `-r, --root <path>` | 项目根目录 | 当前目录 |
+| `--src <dir>` | 源码目录（相对 root） | `src` |
+| `--exclude <dirs>` | 追加排除目录，逗号分隔（如 `generated,legacy`） | 无 |
 | `-v, --verbose` | 显示详细分析过程（analyze） | 关闭 |
 | `--no-report` | 不生成 Markdown 报告（analyze） | 生成 |
 | `-t, --threshold <number>` | 健康度阈值（check） | `70` |
@@ -90,7 +92,7 @@ Markdown 报告包含完整清单与文件行号，可直接贴进 issue 或文�
 3. **降噪**：内置 Vue3 / Pinia / Naive UI 常见全局 API 排除清单，避免框架 API 被误报
 4. **报告**：汇总健康度并渲染控制台输出 + Markdown 报告
 
-**当前约定（如实说明）**：默认按 `src/` 目录结构扫描（可通过 `--root` 指定项目根），并按内部约定跳过 `src/stores/**`。
+**扫描约定**：默认扫描 `src/`（`--src` 可改），跳过 `src/stores/**`（团队内部约定）；`--exclude` 可追加排除目录。
 
 ## FAQ
 
@@ -104,7 +106,7 @@ Markdown 报告包含完整清单与文件行号，可直接贴进 issue 或文�
 <details>
 <summary><b>我的源码不在 src/ 目录，能用吗？</b></summary>
 
-当前版本按 `src/` 约定扫描，`--root` 用于指定项目根目录而非源码目录。非 `src` 结构的支持在计划中，欢迎提 Issue 推动优先级。
+可以。用 `--src` 指定源码目录（相对项目根），例如 `npx ts-type-cleaner analyze --src app`；生成的、不想纳入扫描的目录用 `--exclude generated,legacy` 追加排除。
 
 </details>
 
